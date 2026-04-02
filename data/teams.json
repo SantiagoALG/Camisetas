@@ -1,0 +1,112 @@
+{
+  "groups": [
+    {
+      "id": "A",
+      "teams": [
+        { "id": "mexico", "name": "México", "flag": "🇲🇽", "kit": { "local": "images/mexico/local.png", "visitante": "images/mexico/visitante.png" } },
+        { "id": "sudafrica", "name": "Sudáfrica", "flag": "🇿🇦", "kit": { "local": "images/sudafrica/local.png", "visitante": "images/sudafrica/visitante.png" } },
+        { "id": "corea", "name": "Corea del Sur", "flag": "🇰🇷", "kit": { "local": "images/corea/local.png", "visitante": "images/corea/visitante.png" } },
+        { "id": "chequia", "name": "Chequia", "flag": "🇨🇿", "kit": { "local": "images/chequia/local.png", "visitante": "images/chequia/visitante.png" } }
+      ]
+    },
+    {
+      "id": "B",
+      "teams": [
+        { "id": "canada", "name": "Canadá", "flag": "🇨🇦", "kit": { "local": "images/canada/local.png", "visitante": "images/canada/visitante.png" } },
+        { "id": "suiza", "name": "Suiza", "flag": "🇨🇭", "kit": { "local": "images/suiza/local.png", "visitante": "images/suiza/visitante.png" } },
+        { "id": "qatar", "name": "Qatar", "flag": "🇶🇦", "kit": { "local": "images/qatar/local.png", "visitante": "images/qatar/visitante.png" } },
+        { "id": "bosnia", "name": "Bosnia y Herzegovina", "flag": "🇧🇦", "kit": { "local": "images/bosnia/local.png", "visitante": "images/bosnia/visitante.png" } }
+      ]
+    },
+    {
+      "id": "C",
+      "teams": [
+        { "id": "brasil", "name": "Brasil", "flag": "🇧🇷", "kit": { "local": "images/brasil/local.png", "visitante": "images/brasil/visitante.png" } },
+        { "id": "marruecos", "name": "Marruecos", "flag": "🇲🇦", "kit": { "local": "images/marruecos/local.png", "visitante": "images/marruecos/visitante.png" } },
+        { "id": "haiti", "name": "Haití", "flag": "🇭🇹", "kit": { "local": "images/haiti/local.png", "visitante": "images/haiti/visitante.png" } },
+        { "id": "escocia", "name": "Escocia", "flag": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "kit": { "local": "images/escocia/local.png", "visitante": "images/escocia/visitante.png" } }
+      ]
+    },
+    {
+      "id": "D",
+      "teams": [
+        { "id": "usa", "name": "Estados Unidos", "flag": "🇺🇸", "kit": { "local": "images/usa/local.png", "visitante": "images/usa/visitante.png" } },
+        { "id": "paraguay", "name": "Paraguay", "flag": "🇵🇾", "kit": { "local": "images/paraguay/local.png", "visitante": "images/paraguay/visitante.png" } },
+        { "id": "turquia", "name": "Turquía", "flag": "🇹🇷", "kit": { "local": "images/turquia/local.png", "visitante": "images/turquia/visitante.png" } },
+        { "id": "australia", "name": "Australia", "flag": "🇦🇺", "kit": { "local": "images/australia/local.png", "visitante": "images/australia/visitante.png" } }
+      ]
+    },
+    {
+      "id": "E",
+      "teams": [
+        { "id": "alemania", "name": "Alemania", "flag": "🇩🇪", "kit": { "local": "images/alemania/local.png", "visitante": "images/alemania/visitante.png" } },
+        { "id": "ecuador", "name": "Ecuador", "flag": "🇪🇨", "kit": { "local": "images/ecuador/local.png", "visitante": "images/ecuador/visitante.png" } },
+        { "id": "curacao", "name": "Curazao", "flag": "🇨🇼", "kit": { "local": "images/curacao/local.png", "visitante": "images/curacao/visitante.png" } },
+        { "id": "costademarfil", "name": "Costa de Marfil", "flag": "🇨🇮", "kit": { "local": "images/costademarfil/local.png", "visitante": "images/costademarfil/visitante.png" } }
+      ]
+    },
+    {
+      "id": "F",
+      "teams": [
+        { "id": "holanda", "name": "Países Bajos", "flag": "🇳🇱", "kit": { "local": "images/holanda/local.png", "visitante": "images/holanda/visitante.png" } },
+        { "id": "suecia", "name": "Suecia", "flag": "🇸🇪", "kit": { "local": "images/suecia/local.png", "visitante": "images/suecia/visitante.png" } },
+        { "id": "tunez", "name": "Túnez", "flag": "🇹🇳", "kit": { "local": "images/tunez/local.png", "visitante": "images/tunez/visitante.png" } },
+        { "id": "japon", "name": "Japón", "flag": "🇯🇵", "kit": { "local": "images/japon/local.png", "visitante": "images/japon/visitante.png" } }
+      ]
+    },
+    {
+      "id": "G",
+      "teams": [
+        { "id": "belgica", "name": "Bélgica", "flag": "🇧🇪", "kit": { "local": "images/belgica/local.png", "visitante": "images/belgica/visitante.png" } },
+        { "id": "egipto", "name": "Egipto", "flag": "🇪🇬", "kit": { "local": "images/egipto/local.png", "visitante": "images/egipto/visitante.png" } },
+        { "id": "iran", "name": "Irán", "flag": "🇮🇷", "kit": { "local": "images/iran/local.png", "visitante": "images/iran/visitante.png" } },
+        { "id": "nzealanda", "name": "Nueva Zelanda", "flag": "🇳🇿", "kit": { "local": "images/nzealanda/local.png", "visitante": "images/nzealanda/visitante.png" } }
+      ]
+    },
+    {
+      "id": "H",
+      "teams": [
+        { "id": "espana", "name": "España", "flag": "🇪🇸", "kit": { "local": "images/espana/local.png", "visitante": "images/espana/visitante.png" } },
+        { "id": "caboverde", "name": "Cabo Verde", "flag": "🇨🇻", "kit": { "local": "images/caboverde/local.png", "visitante": "images/caboverde/visitante.png" } },
+        { "id": "arabia", "name": "Arabia Saudita", "flag": "🇸🇦", "kit": { "local": "images/arabia/local.png", "visitante": "images/arabia/visitante.png" } },
+        { "id": "uruguay", "name": "Uruguay", "flag": "🇺🇾", "kit": { "local": "images/uruguay/local.png", "visitante": "images/uruguay/visitante.png" } }
+      ]
+    },
+    {
+      "id": "I",
+      "teams": [
+        { "id": "francia", "name": "Francia", "flag": "🇫🇷", "kit": { "local": "images/francia/local.png", "visitante": "images/francia/visitante.png" } },
+        { "id": "senegal", "name": "Senegal", "flag": "🇸🇳", "kit": { "local": "images/senegal/local.png", "visitante": "images/senegal/visitante.png" } },
+        { "id": "irak", "name": "Irak", "flag": "🇮🇶", "kit": { "local": "images/irak/local.png", "visitante": "images/irak/visitante.png" } },
+        { "id": "noruega", "name": "Noruega", "flag": "🇳🇴", "kit": { "local": "images/noruega/local.png", "visitante": "images/noruega/visitante.png" } }
+      ]
+    },
+    {
+      "id": "J",
+      "teams": [
+        { "id": "argentina", "name": "Argentina", "flag": "🇦🇷", "kit": { "local": "images/argentina/local.png", "visitante": "images/argentina/visitante.png" } },
+        { "id": "argelia", "name": "Argelia", "flag": "🇩🇿", "kit": { "local": "images/argelia/local.png", "visitante": "images/argelia/visitante.png" } },
+        { "id": "austria", "name": "Austria", "flag": "🇦🇹", "kit": { "local": "images/austria/local.png", "visitante": "images/austria/visitante.png" } },
+        { "id": "jordania", "name": "Jordania", "flag": "🇯🇴", "kit": { "local": "images/jordania/local.png", "visitante": "images/jordania/visitante.png" } }
+      ]
+    },
+    {
+      "id": "K",
+      "teams": [
+        { "id": "portugal", "name": "Portugal", "flag": "🇵🇹", "kit": { "local": "images/portugal/local.png", "visitante": "images/portugal/visitante.png" } },
+        { "id": "drcongo", "name": "RD Congo", "flag": "🇨🇩", "kit": { "local": "images/drcongo/local.png", "visitante": "images/drcongo/visitante.png" } },
+        { "id": "uzbekistan", "name": "Uzbekistán", "flag": "🇺🇿", "kit": { "local": "images/uzbekistan/local.png", "visitante": "images/uzbekistan/visitante.png" } },
+        { "id": "colombia", "name": "Colombia", "flag": "🇨🇴", "kit": { "local": "images/colombia/local.png", "visitante": "images/colombia/visitante.png" } }
+      ]
+    },
+    {
+      "id": "L",
+      "teams": [
+        { "id": "inglaterra", "name": "Inglaterra", "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "kit": { "local": "images/inglaterra/local.png", "visitante": "images/inglaterra/visitante.png" } },
+        { "id": "croacia", "name": "Croacia", "flag": "🇭🇷", "kit": { "local": "images/croacia/local.png", "visitante": "images/croacia/visitante.png" } },
+        { "id": "ghana", "name": "Ghana", "flag": "🇬🇭", "kit": { "local": "images/ghana/local.png", "visitante": "images/ghana/visitante.png" } },
+        { "id": "panama", "name": "Panamá", "flag": "🇵🇦", "kit": { "local": "images/panama/local.png", "visitante": "images/panama/visitante.png" } }
+      ]
+    }
+  ]
+}

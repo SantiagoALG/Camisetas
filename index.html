@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIFA 2026 — Kit Bracket</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">KIT<span>/</span>BRACKET <span style="font-size:12px;letter-spacing:1px;color:var(--text-dim)">FIFA 2026</span></div>
+  <nav>
+    <button class="nav-btn active" id="nav-kits" onclick="goTo('kits')">01 Camisetas</button>
+    <button class="nav-btn" id="nav-grupos" onclick="goTo('grupos')" disabled>02 Grupos</button>
+    <button class="nav-btn" id="nav-terceros" onclick="goTo('terceros')" disabled>03 Terceros</button>
+    <button class="nav-btn" id="nav-bracket" onclick="goTo('bracket')" disabled>04 Bracket</button>
+  </nav>
+</header>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ════════════════════════════════════════
+     VIEW 1: SELECCIÓN DE CAMISETAS
+     ════════════════════════════════════════ -->
+<div class="view active" id="view-kits">
+  <div class="container">
+    <div class="page-title">SELECCIÓN DE CAMISETAS</div>
+    <div class="page-subtitle">Elige qué camiseta representa a cada país — local o visitante.</div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="kits-progress" style="width:0%"></div>
+    </div>
+
+    <div id="kits-container"></div>
+  </div>
+
+  <div class="action-bar">
+    <div class="action-bar-info">
+      <strong id="kits-count">0</strong> / 48 camisetas seleccionadas
+    </div>
+    <button class="btn btn-primary" id="btn-to-grupos" onclick="goTo('grupos')" disabled>
+      Continuar a grupos →
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     VIEW 2: FASE DE GRUPOS
+     ════════════════════════════════════════ -->
+<div class="view" id="view-grupos">
+  <div class="container">
+    <div class="page-title">FASE DE GRUPOS</div>
+    <div class="page-subtitle">Arrastra para ordenar las camisetas del 1° al 4° en cada grupo.</div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="grupos-progress" style="width:0%"></div>
+    </div>
+
+    <div class="terceros-note">
+      <strong>Clasifican:</strong>
+      <span class="legend-item"><span class="qualifier-badge q1"></span> 1° lugar (12)</span>
+      <span class="legend-item"><span class="qualifier-badge q2"></span> 2° lugar (12)</span>
+      <span class="legend-item"><span class="qualifier-badge q3"></span> Mejor 3° (8 de 12)</span>
+      <span class="legend-item"><span class="qualifier-badge q-out"></span> Eliminado</span>
+    </div>
+
+    <div class="groups-grid" id="groups-container"></div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-ghost" onclick="goTo('kits')">← Volver</button>
+    <div class="action-bar-info">
+      <strong id="grupos-count">0</strong> / 12 grupos ordenados
+    </div>
+    <button class="btn btn-primary" id="btn-to-terceros" onclick="goTo('terceros')" disabled>
+      Elegir mejores terceros →
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     VIEW 3: MEJORES TERCEROS
+     ════════════════════════════════════════ -->
+<div class="view" id="view-terceros">
+  <div class="container">
+    <div class="page-title">MEJORES TERCEROS</div>
+    <div class="page-subtitle">Elige los 8 mejores terceros de los 12 grupos que pasan a dieciseisavos.</div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="terceros-progress" style="width:0%"></div>
+    </div>
+
+    <div id="terceros-container"></div>
+  </div>
+
+  <div class="action-bar">
+    <button class="btn btn-ghost" onclick="goTo('grupos')">← Volver</button>
+    <div class="action-bar-info">
+      <strong id="terceros-count">0</strong> / 8 seleccionados
+    </div>
+    <button class="btn btn-primary" id="btn-to-bracket" onclick="buildBracket(); goTo('bracket')" disabled>
+      Generar bracket →
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     VIEW 4: BRACKET ELIMINATORIO
+     ════════════════════════════════════════ -->
+<div class="view" id="view-bracket">
+  <div class="container" style="max-width:none; padding-right:20px;">
+    <div class="page-title">BRACKET ELIMINATORIO</div>
+    <div class="page-subtitle">Haz clic en la camiseta ganadora para avanzarla a la siguiente ronda.</div>
+
+    <div class="bracket-wrapper">
+      <div class="bracket" id="bracket-container"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+const state = {
+  teams: [],           // flat list loaded from JSON
+  groups: [],          // raw group data
+  kitChoices: {},      // { teamId: 'local' | 'visitante' }
+  groupRankings: {},   // { groupId: [teamId, teamId, ...] } (ordered 1st→4th)
+  groupsDone: {},      // { groupId: true/false }
+  bestThirds: [],      // [teamId, ...] (8 selected)
+  bracket: null,       // bracket state
+};
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+async function init() {
+  try {
+    const res = await fetch('data/teams.json');
+    const data = await res.json();
+    state.groups = data.groups;
+    state.teams = data.groups.flatMap(g => g.teams.map(t => ({ ...t, groupId: g.id })));
+
+    // Default kit choice = local
+    state.teams.forEach(t => { state.kitChoices[t.id] = 'local'; });
+
+    renderKitsView();
+    renderGroupsView();
+  } catch (e) {
+    console.error('Error loading teams.json', e);
+    showToast('Error cargando teams.json');
+  }
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+function goTo(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + view).classList.add('active');
+
+  if (view === 'terceros') renderTercerosView();
+}
+
+function enableNav(id) {
+  const btn = document.getElementById('nav-' + id);
+  if (btn) { btn.disabled = false; }
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function getTeam(id) { return state.teams.find(t => t.id === id); }
+
+function getKitSrc(teamId) {
+  const team = getTeam(teamId);
+  const type = state.kitChoices[teamId] || 'local';
+  return team.kit[type];
+}
+
+function kitThumb(teamId, cls = 'rank-kit-thumb') {
+  const src = getKitSrc(teamId);
+  const team = getTeam(teamId);
+  return `<img src="${src}" alt="${team.name}" class="${cls}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+          <span class="rank-kit-placeholder" style="display:none">${team.flag}</span>`;
+}
+
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ════════════════════════════════════════
+// VIEW 1: KITS
+// ════════════════════════════════════════
+function renderKitsView() {
+  const container = document.getElementById('kits-container');
+  let html = '';
+
+  state.groups.forEach(group => {
+    html += `
+      <div class="group-divider">
+        <span class="group-label">GRUPO ${group.id}</span>
+        <div class="group-line"></div>
+      </div>
+      <div class="kit-grid">
+    `;
+
+    group.teams.forEach(team => {
+      const chosen = state.kitChoices[team.id] || 'local';
+      html += buildKitCard(team, chosen);
+    });
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+  updateKitsProgress();
+  setupKitUploads();
+}
+
+function buildKitCard(team, chosen) {
+  return `
+    <div class="kit-card ${chosen ? 'done' : ''}" id="kitcard-${team.id}">
+      <div class="kit-card-header">
+        <span class="kit-flag">${team.flag}</span>
+        <span class="kit-country">${team.name}</span>
+        <span class="kit-badge selected">${chosen === 'local' ? 'LOCAL' : 'VISITANTE'}</span>
+      </div>
+      <div class="kit-options">
+        ${buildKitOption(team, 'local', chosen)}
+        ${buildKitOption(team, 'visitante', chosen)}
+      </div>
+    </div>
+  `;
+}
+
+function buildKitOption(team, type, chosen) {
+  const src = team.kit[type];
+  const label = type === 'local' ? 'Local' : 'Visitante';
+  const sel = chosen === type ? 'selected' : '';
+  return `
+    <div class="kit-option ${sel}" id="kito-${team.id}-${type}" onclick="selectKit('${team.id}', '${type}')">
+      <img src="${src}" alt="${label}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+      <span style="display:none;width:100%;height:60%;align-items:center;justify-content:center;font-size:36px;opacity:0.25">${team.flag}</span>
+      <div class="kit-option-label">${label}</div>
+      <div class="kit-upload-overlay">
+        <span class="upload-icon">↑</span>
+        <span>Subir imagen</span>
+      </div>
+      <input type="file" accept="image/*" class="kit-upload-btn"
+             onchange="handleKitUpload(event, '${team.id}', '${type}')"
+             title="Subir camiseta ${label}">
+    </div>
+  `;
+}
+
+function selectKit(teamId, type) {
+  state.kitChoices[teamId] = type;
+
+  // Update visual
+  ['local', 'visitante'].forEach(t => {
+    const el = document.getElementById(`kito-${teamId}-${t}`);
+    if (el) el.classList.toggle('selected', t === type);
+  });
+
+  const card = document.getElementById(`kitcard-${teamId}`);
+  if (card) {
+    card.classList.add('done');
+    const badge = card.querySelector('.kit-badge');
+    if (badge) badge.textContent = type === 'local' ? 'LOCAL' : 'VISITANTE';
+  }
+
+  updateKitsProgress();
+  // Also update groups view thumbnail if rendered
+  updateGroupsThumb(teamId);
+}
+
+function handleKitUpload(event, teamId, type) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+
+  // Update team kit src in state (runtime override)
+  const team = getTeam(teamId);
+  team.kit[type] = url;
+
+  // Re-render just that card
+  const card = document.getElementById(`kitcard-${teamId}`);
+  if (card) {
+    const chosen = state.kitChoices[teamId] || 'local';
+    card.outerHTML = buildKitCard(team, chosen);
+    setupKitUploads();
+  }
+
+  selectKit(teamId, type);
+  showToast(`Camiseta de ${team.name} actualizada`);
+}
+
+function setupKitUploads() {
+  // File inputs are already inline, no extra setup needed
+}
+
+function updateKitsProgress() {
+  const count = Object.keys(state.kitChoices).length;
+  document.getElementById('kits-count').textContent = count;
+  const pct = (count / 48) * 100;
+  document.getElementById('kits-progress').style.width = pct + '%';
+
+  const btn = document.getElementById('btn-to-grupos');
+  if (count === 48) {
+    btn.disabled = false;
+    enableNav('grupos');
+  }
+}
+
+// ════════════════════════════════════════
+// VIEW 2: GRUPOS
+// ════════════════════════════════════════
+function renderGroupsView() {
+  const container = document.getElementById('groups-container');
+  let html = '';
+
+  state.groups.forEach(group => {
+    // Init default ranking if not set
+    if (!state.groupRankings[group.id]) {
+      state.groupRankings[group.id] = group.teams.map(t => t.id);
+    }
+
+    html += buildGroupCard(group);
+  });
+
+  container.innerHTML = html;
+  setupDragDrop();
+  updateGruposProgress();
+}
+
+function buildGroupCard(group) {
+  const ranking = state.groupRankings[group.id] || group.teams.map(t => t.id);
+
+  const items = ranking.map((teamId, idx) => {
+    const team = getTeam(teamId);
+    const kitSrc = getKitSrc(teamId);
+    const qClass = idx === 0 ? 'q1' : idx === 1 ? 'q2' : idx === 2 ? 'q3' : 'q-out';
+    return `
+      <li class="ranking-item" draggable="true"
+          data-team="${teamId}" data-group="${group.id}">
+        <span class="rank-pos">${idx + 1}</span>
+        <div class="qualifier-badge ${qClass}"></div>
+        <img src="${kitSrc}" alt="${team.name}" class="rank-kit-thumb"
+             onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+        <span class="rank-kit-placeholder" style="display:none">${team.flag}</span>
+        <div class="rank-info">
+          <div class="rank-flag-name">
+            <span>${team.flag}</span>
+            <span>${team.name}</span>
+          </div>
+          <div class="rank-kit-type">${(state.kitChoices[teamId] || 'local').toUpperCase()}</div>
+        </div>
+        <span class="rank-handle">⠿</span>
+      </li>
+    `;
+  }).join('');
+
+  return `
+    <div class="group-card">
+      <div class="group-card-header">
+        <span class="group-card-title">GRUPO ${group.id}</span>
+        <span class="group-card-hint">arrastra para ordenar</span>
+      </div>
+      <ul class="ranking-list" id="ranking-${group.id}">${items}</ul>
+    </div>
+  `;
+}
+
+function updateGroupCard(groupId) {
+  const group = state.groups.find(g => g.id === groupId);
+  const card = document.querySelector(`#ranking-${groupId}`)?.closest('.group-card');
+  if (card && group) {
+    card.outerHTML = buildGroupCard(group);
+    setupDragDrop();
+  }
+}
+
+function updateGroupsThumb(teamId) {
+  const team = getTeam(teamId);
+  const el = document.querySelector(`[data-team="${teamId}"] .rank-kit-thumb`);
+  if (el) {
+    el.src = getKitSrc(teamId);
+    const typeEl = document.querySelector(`[data-team="${teamId}"] .rank-kit-type`);
+    if (typeEl) typeEl.textContent = (state.kitChoices[teamId] || 'local').toUpperCase();
+  }
+}
+
+function updateGruposProgress() {
+  // A group is "done" if user has interacted (we'll count all as done since default order is set)
+  const doneCount = Object.keys(state.groupsDone).length;
+  document.getElementById('grupos-count').textContent = doneCount;
+  const pct = (doneCount / 12) * 100;
+  document.getElementById('grupos-progress').style.width = pct + '%';
+
+  const allDone = doneCount >= 12;
+  document.getElementById('btn-to-terceros').disabled = !allDone;
+  if (allDone) enableNav('terceros');
+}
+
+function markGroupDone(groupId) {
+  state.groupsDone[groupId] = true;
+  updateGruposProgress();
+}
+
+// ── DRAG & DROP ──
+let dragSrc = null;
+
+function setupDragDrop() {
+  document.querySelectorAll('.ranking-item').forEach(item => {
+    item.addEventListener('dragstart', onDragStart);
+    item.addEventListener('dragover', onDragOver);
+    item.addEventListener('drop', onDrop);
+    item.addEventListener('dragend', onDragEnd);
+  });
+}
+
+function onDragStart(e) {
+  dragSrc = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.ranking-item').forEach(i => i.classList.remove('drag-over'));
+  this.classList.add('drag-over');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  if (dragSrc === this) return;
+
+  const groupId = this.dataset.group;
+  const list = document.getElementById(`ranking-${groupId}`);
+  const items = [...list.querySelectorAll('.ranking-item')];
+  const srcIdx = items.indexOf(dragSrc);
+  const dstIdx = items.indexOf(this);
+
+  // Reorder state
+  const ranking = state.groupRankings[groupId];
+  const [moved] = ranking.splice(srcIdx, 1);
+  ranking.splice(dstIdx, 0, moved);
+
+  markGroupDone(groupId);
+  updateGroupCard(groupId);
+}
+
+function onDragEnd() {
+  this.classList.remove('dragging');
+  document.querySelectorAll('.ranking-item').forEach(i => i.classList.remove('drag-over'));
+}
+
+// ════════════════════════════════════════
+// VIEW 3: MEJORES TERCEROS
+// ════════════════════════════════════════
+function renderTercerosView() {
+  const container = document.getElementById('terceros-container');
+
+  // Get all 3rd-place teams
+  const thirds = state.groups.map(g => {
+    const ranking = state.groupRankings[g.id] || g.teams.map(t => t.id);
+    return { teamId: ranking[2], groupId: g.id };
+  });
+
+  let html = `<div class="terceros-grid">`;
+  thirds.forEach(({ teamId, groupId }) => {
+    const team = getTeam(teamId);
+    const kitSrc = getKitSrc(teamId);
+    const selected = state.bestThirds.includes(teamId);
+    const disabled = !selected && state.bestThirds.length >= 8;
+
+    html += `
+      <div class="tercero-card ${selected ? 'selected' : ''} ${disabled ? 'disabled' : ''}"
+           onclick="toggleTercero('${teamId}')">
+        <img src="${kitSrc}" alt="${team.name}" class="tercero-thumb"
+             onerror="this.style.display='none'">
+        <div class="tercero-info">
+          <div class="tercero-name">${team.flag} ${team.name}</div>
+          <div class="tercero-group">GRUPO ${groupId} — 3°</div>
+        </div>
+        ${selected ? '<span style="color:var(--gold);font-size:16px">★</span>' : ''}
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+  updateTercerosProgress();
+}
+
+function toggleTercero(teamId) {
+  const idx = state.bestThirds.indexOf(teamId);
+  if (idx >= 0) {
+    state.bestThirds.splice(idx, 1);
+  } else {
+    if (state.bestThirds.length >= 8) {
+      showToast('Ya tienes 8 terceros seleccionados');
+      return;
+    }
+    state.bestThirds.push(teamId);
+  }
+  renderTercerosView();
+}
+
+function updateTercerosProgress() {
+  const count = state.bestThirds.length;
+  document.getElementById('terceros-count').textContent = count;
+  const pct = (count / 8) * 100;
+  document.getElementById('terceros-progress').style.width = pct + '%';
+
+  const btn = document.getElementById('btn-to-bracket');
+  btn.disabled = count !== 8;
+  if (count === 8) enableNav('bracket');
+}
+
+// ════════════════════════════════════════
+// VIEW 4: BRACKET
+// ════════════════════════════════════════
+
+function getQualifiedTeams() {
+  const firsts = state.groups.map(g => {
+    const r = state.groupRankings[g.id] || g.teams.map(t => t.id);
+    return r[0];
+  }); // 12
+
+  const seconds = state.groups.map(g => {
+    const r = state.groupRankings[g.id] || g.teams.map(t => t.id);
+    return r[1];
+  }); // 12
+
+  // 8 best thirds (already chosen)
+  const thirds = state.bestThirds; // 8
+
+  return [...firsts, ...seconds, ...thirds]; // 32
+}
+
+function buildBracket() {
+  const teams = getQualifiedTeams();
+
+  // Shuffle into pairs (simple sequential pairing)
+  // In a real bracket you'd do seeding, but let's keep it sequential
+  state.bracket = {
+    rounds: [],
+  };
+
+  // Round of 32 — 16 matches
+  const r32 = [];
+  for (let i = 0; i < 32; i += 2) {
+    r32.push({ id: `r32-${i/2}`, teams: [teams[i], teams[i+1]], winner: null });
+  }
+  state.bracket.rounds.push({ name: 'DIECISEISAVOS', matches: r32 });
+
+  // Subsequent rounds — TBD
+  const roundNames = ['OCTAVOS', 'CUARTOS', 'SEMIFINAL', 'FINAL'];
+  let prev = 16;
+  roundNames.forEach((name, ri) => {
+    prev = prev / 2;
+    const matches = [];
+    for (let i = 0; i < prev; i++) {
+      matches.push({ id: `r${ri+1}-${i}`, teams: [null, null], winner: null });
+    }
+    state.bracket.rounds.push({ name, matches });
+  });
+
+  renderBracket();
+}
+
+function renderBracket() {
+  const container = document.getElementById('bracket-container');
+  let html = '';
+
+  state.bracket.rounds.forEach((round, ri) => {
+    html += `<div class="bracket-round">`;
+    html += `<div class="bracket-round-header">${round.name}</div>`;
+    html += `<div class="bracket-matches">`;
+
+    round.matches.forEach(match => {
+      html += `<div class="bracket-match-wrapper">`;
+
+      // Connector from previous round
+      if (ri > 0) {
+        html += `<div class="bracket-connector"></div>`;
+      }
+
+      html += `<div class="bracket-match" id="match-${match.id}">`;
+
+      [0, 1].forEach(side => {
+        const teamId = match.teams[side];
+        const team = teamId ? getTeam(teamId) : null;
+        const isWinner = match.winner === teamId && teamId !== null;
+        const isLoser = match.winner !== null && match.winner !== teamId && teamId !== null;
+        const isTBD = !teamId;
+
+        let cls = 'bracket-team';
+        if (isWinner) cls += ' winner';
+        if (isLoser) cls += ' loser';
+        if (isTBD) cls += ' tbd';
+
+        const clickable = teamId && !match.winner;
+
+        html += `<div class="${cls}"
+          ${clickable ? `onclick="pickWinner('${match.id}', '${teamId}')"` : ''}>`;
+
+        if (team) {
+          const kitSrc = getKitSrc(teamId);
+          html += `
+            <img src="${kitSrc}" alt="${team.name}" class="bt-kit"
+                 onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+            <span class="bt-placeholder" style="display:none">${team.flag}</span>
+            <span class="bt-name">${team.name}</span>
+            <span class="bt-flag">${team.flag}</span>
+          `;
+        } else {
+          html += `<span class="bt-kit" style="opacity:0.2">?</span><span class="bt-name" style="color:var(--text-dim)">Por definir</span>`;
+        }
+
+        html += `</div>`;
+      });
+
+      html += `</div>`; // match
+      html += `</div>`; // wrapper
+    });
+
+    html += `</div>`; // matches
+    html += `</div>`; // round
+  });
+
+  container.innerHTML = html;
+}
+
+function pickWinner(matchId, winnerId) {
+  // Find match
+  let roundIdx = -1, matchIdx = -1;
+  state.bracket.rounds.forEach((round, ri) => {
+    round.matches.forEach((match, mi) => {
+      if (match.id === matchId) { roundIdx = ri; matchIdx = mi; }
+    });
+  });
+
+  if (roundIdx === -1) return;
+
+  const match = state.bracket.rounds[roundIdx].matches[matchIdx];
+  match.winner = winnerId;
+
+  // Advance winner to next round
+  if (roundIdx + 1 < state.bracket.rounds.length) {
+    const nextRound = state.bracket.rounds[roundIdx + 1];
+    const nextMatchIdx = Math.floor(matchIdx / 2);
+    const nextSide = matchIdx % 2;
+    nextRound.matches[nextMatchIdx].teams[nextSide] = winnerId;
+  } else {
+    // Champion!
+    showChampion(winnerId);
+    return;
+  }
+
+  renderBracket();
+  showToast(`${getTeam(winnerId).flag} ${getTeam(winnerId).name} avanza`);
+}
+
+function showChampion(teamId) {
+  const team = getTeam(teamId);
+  const kitSrc = getKitSrc(teamId);
+
+  const container = document.getElementById('bracket-container');
+  container.innerHTML = `
+    <div class="champion-view" style="width:100%;min-width:0">
+      <div class="champion-label">CAMPEÓN DEL KIT BRACKET</div>
+      <div class="champion-flag">${team.flag}</div>
+      <img src="${kitSrc}" alt="${team.name}" class="champion-kit"
+           onerror="this.src='';this.style.fontSize='120px';this.style.background='none'">
+      <div class="champion-name">${team.name.toUpperCase()}</div>
+      <button class="btn btn-ghost" onclick="renderBracket()" style="margin-top:16px">
+        ← Ver bracket completo
+      </button>
+    </div>
+  `;
+}
+
+// ════════════════════════════════════════
+// MARK ALL GROUPS DONE BY DEFAULT
+// (user can still reorder, but won't be blocked)
+// ════════════════════════════════════════
+function initGroupsDone() {
+  // Mark all groups done so user can proceed even with default ordering
+  state.groups.forEach(g => {
+    state.groupsDone[g.id] = true;
+  });
+  updateGruposProgress();
+}
+
+// ════════════════════════════════════════
+// START
+// ════════════════════════════════════════
+init().then(() => {
+  initGroupsDone();
+});
+</script>
+</body>
+</html>
