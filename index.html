@@ -264,7 +264,7 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 
 /* ─── MAPA ─── */
 .map-view-inner{padding:32px 40px 80px;max-width:1400px;margin:0 auto}
-#world-svg-container{width:100%;position:relative;background:#e8e4db;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+#world-svg-container{width:100%;min-height:400px;position:relative;background:#e8e4db;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
 #world-svg-container svg{width:100%;height:auto;display:block}
 .country-path{transition:fill 150ms ease}
 .map-tooltip{position:fixed;pointer-events:none;z-index:500;opacity:0;transition:opacity 180ms ease;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:220px;max-width:260px;box-shadow:0 16px 48px rgba(0,0,0,0.15)}
@@ -520,7 +520,7 @@ function goTo(view) {
   document.getElementById('nav-'+view).classList.add('active');
   if (view === 'terceros') renderTercerosView();
   if (view === 'galeria') renderGallery();
-  if (view === 'mapa') initMap();
+  if (view === 'mapa') requestAnimationFrame(() => initMap());
 }
 function enableNav(id) { const b = document.getElementById('nav-'+id); if(b) b.disabled=false; }
 function getTeam(id) { return state.teams.find(t => t.id===id); }
@@ -1072,11 +1072,11 @@ function renderSVGMap(container, topo) {
   const loader = document.getElementById('map-loading');
   if (loader) loader.remove();
 
-  const W = container.clientWidth || 1100;
+  const W = Math.max(container.clientWidth || container.offsetWidth || 900, 400);
   const H = Math.round(W * 0.54);
 
   // Robinson projection (National Geographic style)
-  const proj = d3.geoRobinson().scale(W / 6.3).translate([W / 2, H / 2]);
+  const proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
   const pathGen = d3.geoPath().projection(proj);
 
   const svgNS = 'http://www.w3.org/2000/svg';
