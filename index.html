@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg:#0a0a0a;--surface:#111111;--surface2:#1a1a1a;--surface3:#222222;
@@ -149,6 +150,8 @@ nav{display:flex;gap:4px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#555}
+/* Twemoji flags */
+img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 @media(max-width:768px){header{padding:16px 20px}.container{padding:24px 20px 100px}.action-bar{padding:12px 20px}.kit-grid{grid-template-columns:1fr}.groups-grid{grid-template-columns:1fr}}
 .kit-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 250ms ease}
 .kit-modal-overlay.open{opacity:1;pointer-events:all}
@@ -359,6 +362,7 @@ function renderKitsView() {
   });
   document.getElementById('kits-container').innerHTML=html;
   updateKitsProgress();
+  if(window.twemoji) twemoji.parse(document.getElementById('kits-container'));
 }
 function buildKitCard(team, chosen) {
   return `<div class="kit-card done" id="kitcard-${team.id}">
@@ -404,6 +408,7 @@ function renderGroupsView() {
   state.groups.forEach(g => { if(!state.groupRankings[g.id]) state.groupRankings[g.id]=g.teams.map(t=>t.id); html+=buildGroupCard(g); });
   document.getElementById('groups-container').innerHTML=html;
   setupDragDrop(); updateGruposProgress();
+  if(window.twemoji) twemoji.parse(document.getElementById('groups-container'));
 }
 function buildGroupCard(group) {
   const ranking=state.groupRankings[group.id]||group.teams.map(t=>t.id);
@@ -468,6 +473,7 @@ function renderTercerosView() {
   html+=`</div>`;
   document.getElementById('terceros-container').innerHTML=html;
   updateTercerosProgress();
+  if(window.twemoji) twemoji.parse(document.getElementById('terceros-container'));
 }
 function toggleTercero(teamId) {
   const idx=state.bestThirds.indexOf(teamId);
@@ -567,6 +573,7 @@ function renderBracket() {
     </div>
     <div class="bracket-side">${rightHTML}</div>
   `;
+  if(window.twemoji) twemoji.parse(document.getElementById('bracket-container'));
 }
 
 function renderMatch(match) {
