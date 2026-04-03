@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" crossorigin="anonymous"></script>
 <style>
 :root {
   --bg:#0a0a0a;--surface:#111111;--surface2:#1a1a1a;--surface3:#222222;
@@ -253,76 +252,76 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 // ════════════════════════════════════════
 const TEAMS_DATA = { groups: [
   { id:"A", teams:[
-    { id:"mexico",    name:"México",          flag:"🇲🇽", kit:{ local:"images/México/México Local.jpg",                             visitante:"images/México/México Visitante.jpg" }},
-    { id:"sudafrica", name:"Sudáfrica",        flag:"🇿🇦", kit:{ local:"images/Sudáfrica/Sudáfrica Local.jpg",                     visitante:"images/Sudáfrica/Sudáfrica Visitante.jpg" }},
-    { id:"corea",     name:"Corea del Sur",    flag:"🇰🇷", kit:{ local:"images/Corea del Sur/Corea del Sur Local.jpg",             visitante:"images/Corea del Sur/Corea del Sur Visitante.jpg" }},
-    { id:"chequia",   name:"Chequia",          flag:"🇨🇿", kit:{ local:"images/Chequia/Chequia Local.jpg",                         visitante:"images/Chequia/Chequia Visitante.jpg" }}
+    { id:"mexico",    name:"México",          flag:"mx",      kit:{ local:"images/México/México Local.jpg",                                 visitante:"images/México/México Visitante.jpg" }},
+    { id:"sudafrica", name:"Sudáfrica",        flag:"za",      kit:{ local:"images/Sudáfrica/Sudáfrica Local.jpg",                         visitante:"images/Sudáfrica/Sudáfrica Visitante.jpg" }},
+    { id:"corea",     name:"Corea del Sur",    flag:"kr",      kit:{ local:"images/Corea del Sur/Corea del Sur Local.jpg",                 visitante:"images/Corea del Sur/Corea del Sur Visitante.jpg" }},
+    { id:"chequia",   name:"Chequia",          flag:"cz",      kit:{ local:"images/Chequia/Chequia Local.jpg",                             visitante:"images/Chequia/Chequia Visitante.jpg" }}
   ]},
   { id:"B", teams:[
-    { id:"canada",  name:"Canadá",               flag:"🇨🇦", kit:{ local:"images/Canadá/Canadá Local.jpg",                         visitante:"images/Canadá/Canadá Visitante.jpg" }},
-    { id:"suiza",   name:"Suiza",                flag:"🇨🇭", kit:{ local:"images/Suiza/Suiza Local.jpg",                           visitante:"images/Suiza/Suiza Visitante.jpg" }},
-    { id:"qatar",   name:"Qatar",                flag:"🇶🇦", kit:{ local:"images/Qatar/Qatar Local.jpg",                           visitante:"images/Qatar/Qatar Visitante.jpg" }},
-    { id:"bosnia",  name:"Bosnia y Herzegovina", flag:"🇧🇦", kit:{ local:"images/Bosnia y Herzegovina/Bosnia y Herzegovina Local.jpg", visitante:"images/Bosnia y Herzegovina/Bosnia y Herzegovina Visitante.jpg" }}
+    { id:"canada",  name:"Canadá",               flag:"ca",    kit:{ local:"images/Canadá/Canadá Local.jpg",                               visitante:"images/Canadá/Canadá Visitante.jpg" }},
+    { id:"suiza",   name:"Suiza",                flag:"ch",    kit:{ local:"images/Suiza/Suiza Local.jpg",                                 visitante:"images/Suiza/Suiza Visitante.jpg" }},
+    { id:"qatar",   name:"Qatar",                flag:"qa",    kit:{ local:"images/Qatar/Qatar Local.jpg",                                 visitante:"images/Qatar/Qatar Visitante.jpg" }},
+    { id:"bosnia",  name:"Bosnia y Herzegovina", flag:"ba",    kit:{ local:"images/Bosnia y Herzegovina/Bosnia y Herzegovina Local.jpg",   visitante:"images/Bosnia y Herzegovina/Bosnia y Herzegovina Visitante.jpg" }}
   ]},
   { id:"C", teams:[
-    { id:"brasil",    name:"Brasil",    flag:"🇧🇷", kit:{ local:"images/Brasil/Brasil Local.jpg",         visitante:"images/Brasil/Brasil Visitante.jpg" }},
-    { id:"marruecos", name:"Marruecos", flag:"🇲🇦", kit:{ local:"images/Marruecos/Marruecos Local.jpg",   visitante:"images/Marruecos/Marruecos Visitante.jpg" }},
-    { id:"haiti",     name:"Haití",     flag:"🇭🇹", kit:{ local:"images/Haití/Haití Local.jpg",           visitante:"images/Haití/Haití Visitante.jpg" }},
-    { id:"escocia",   name:"Escocia",   flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", kit:{ local:"images/Escocia/Escocia Local.jpg",     visitante:"images/Escocia/Escocia Visitante.jpg" }}
+    { id:"brasil",    name:"Brasil",    flag:"br",        kit:{ local:"images/Brasil/Brasil Local.jpg",             visitante:"images/Brasil/Brasil Visitante.jpg" }},
+    { id:"marruecos", name:"Marruecos", flag:"ma",        kit:{ local:"images/Marruecos/Marruecos Local.jpg",       visitante:"images/Marruecos/Marruecos Visitante.jpg" }},
+    { id:"haiti",     name:"Haití",     flag:"ht",        kit:{ local:"images/Haití/Haití Local.jpg",               visitante:"images/Haití/Haití Visitante.jpg" }},
+    { id:"escocia",   name:"Escocia",   flag:"gb-sct",    kit:{ local:"images/Escocia/Escocia Local.jpg",           visitante:"images/Escocia/Escocia Visitante.jpg" }}
   ]},
   { id:"D", teams:[
-    { id:"usa",       name:"Estados Unidos", flag:"🇺🇸", kit:{ local:"images/Estados Unidos/Estados Unidos Local.jpg", visitante:"images/Estados Unidos/Estados Unidos Visitante.jpg" }},
-    { id:"paraguay",  name:"Paraguay",       flag:"🇵🇾", kit:{ local:"images/Paraguay/Paraguay Local.jpg",             visitante:"images/Paraguay/Paraguay Visitante.jpg" }},
-    { id:"turquia",   name:"Turquía",        flag:"🇹🇷", kit:{ local:"images/Turquía/Turquía Local.jpg",               visitante:"images/Turquía/Turquía Visitante.jpg" }},
-    { id:"australia", name:"Australia",      flag:"🇦🇺", kit:{ local:"images/Australia/Australia Local.jpg",           visitante:"images/Australia/Australia Visitante.jpg" }}
+    { id:"usa",       name:"Estados Unidos", flag:"us",    kit:{ local:"images/Estados Unidos/Estados Unidos Local.jpg", visitante:"images/Estados Unidos/Estados Unidos Visitante.jpg" }},
+    { id:"paraguay",  name:"Paraguay",       flag:"py",    kit:{ local:"images/Paraguay/Paraguay Local.jpg",             visitante:"images/Paraguay/Paraguay Visitante.jpg" }},
+    { id:"turquia",   name:"Turquía",        flag:"tr",    kit:{ local:"images/Turquía/Turquía Local.jpg",               visitante:"images/Turquía/Turquía Visitante.jpg" }},
+    { id:"australia", name:"Australia",      flag:"au",    kit:{ local:"images/Australia/Australia Local.jpg",           visitante:"images/Australia/Australia Visitante.jpg" }}
   ]},
   { id:"E", teams:[
-    { id:"alemania",      name:"Alemania",        flag:"🇩🇪", kit:{ local:"images/Alemania/Alemania Local.jpg",                     visitante:"images/Alemania/Alemania Visitante.jpg" }},
-    { id:"ecuador",       name:"Ecuador",         flag:"🇪🇨", kit:{ local:"images/Ecuador/Ecuador Local.jpg",                       visitante:"images/Ecuador/Ecuador Visitante.jpg" }},
-    { id:"curacao",       name:"Curazao",         flag:"🇨🇼", kit:{ local:"images/Curazao/Curazao Local.jpg",                       visitante:"images/Curazao/Curazao Visitante.jpg" }},
-    { id:"costademarfil", name:"Costa de Marfil", flag:"🇨🇮", kit:{ local:"images/Costa de Marfil/Costa de Marfil Local.jpg",       visitante:"images/Costa de Marfil/Costa de Marfil Visitante.jpg" }}
+    { id:"alemania",      name:"Alemania",        flag:"de",    kit:{ local:"images/Alemania/Alemania Local.jpg",                         visitante:"images/Alemania/Alemania Visitante.jpg" }},
+    { id:"ecuador",       name:"Ecuador",         flag:"ec",    kit:{ local:"images/Ecuador/Ecuador Local.jpg",                           visitante:"images/Ecuador/Ecuador Visitante.jpg" }},
+    { id:"curacao",       name:"Curazao",         flag:"cw",    kit:{ local:"images/Curazao/Curazao Local.jpg",                           visitante:"images/Curazao/Curazao Visitante.jpg" }},
+    { id:"costademarfil", name:"Costa de Marfil", flag:"ci",    kit:{ local:"images/Costa de Marfil/Costa de Marfil Local.jpg",           visitante:"images/Costa de Marfil/Costa de Marfil Visitante.jpg" }}
   ]},
   { id:"F", teams:[
-    { id:"holanda", name:"Países Bajos", flag:"🇳🇱", kit:{ local:"images/Países Bajos/Países Bajos Local.jpg", visitante:"images/Países Bajos/Países Bajos Visitante.jpg" }},
-    { id:"suecia",  name:"Suecia",       flag:"🇸🇪", kit:{ local:"images/Suecia/Suecia Local.jpg",             visitante:"images/Suecia/Suecia Visitante.jpg" }},
-    { id:"tunez",   name:"Túnez",        flag:"🇹🇳", kit:{ local:"images/Túnez/Túnez Local.jpg",               visitante:"images/Túnez/Túnez Visitante.jpg" }},
-    { id:"japon",   name:"Japón",        flag:"🇯🇵", kit:{ local:"images/Japón/Japón Local.jpg",               visitante:"images/Japón/Japón Visitante.jpg" }}
+    { id:"holanda", name:"Países Bajos", flag:"nl",    kit:{ local:"images/Países Bajos/Países Bajos Local.jpg", visitante:"images/Países Bajos/Países Bajos Visitante.jpg" }},
+    { id:"suecia",  name:"Suecia",       flag:"se",    kit:{ local:"images/Suecia/Suecia Local.jpg",             visitante:"images/Suecia/Suecia Visitante.jpg" }},
+    { id:"tunez",   name:"Túnez",        flag:"tn",    kit:{ local:"images/Túnez/Túnez Local.jpg",               visitante:"images/Túnez/Túnez Visitante.jpg" }},
+    { id:"japon",   name:"Japón",        flag:"jp",    kit:{ local:"images/Japón/Japón Local.jpg",               visitante:"images/Japón/Japón Visitante.jpg" }}
   ]},
   { id:"G", teams:[
-    { id:"belgica",   name:"Bélgica",      flag:"🇧🇪", kit:{ local:"images/Bélgica/Bélgica Local.jpg",             visitante:"images/Bélgica/Bélgica Visitante.jpg" }},
-    { id:"egipto",    name:"Egipto",        flag:"🇪🇬", kit:{ local:"images/Egipto/Egipto Local.jpg",               visitante:"images/Egipto/Egipto Visitante.jpg" }},
-    { id:"iran",      name:"Irán",          flag:"🇮🇷", kit:{ local:"images/Irán/Irán Local.jpg",                   visitante:"images/Irán/Irán Visitante.jpg" }},
-    { id:"nzealanda", name:"Nueva Zelanda", flag:"🇳🇿", kit:{ local:"images/Nueva Zelanda/Nueva Zelanda Local.jpg", visitante:"images/Nueva Zelanda/Nueva Zelanda Visitante.jpg" }}
+    { id:"belgica",   name:"Bélgica",      flag:"be",    kit:{ local:"images/Bélgica/Bélgica Local.jpg",             visitante:"images/Bélgica/Bélgica Visitante.jpg" }},
+    { id:"egipto",    name:"Egipto",        flag:"eg",    kit:{ local:"images/Egipto/Egipto Local.jpg",               visitante:"images/Egipto/Egipto Visitante.jpg" }},
+    { id:"iran",      name:"Irán",          flag:"ir",    kit:{ local:"images/Irán/Irán Local.jpg",                   visitante:"images/Irán/Irán Visitante.jpg" }},
+    { id:"nzealanda", name:"Nueva Zelanda", flag:"nz",    kit:{ local:"images/Nueva Zelanda/Nueva Zelanda Local.jpg", visitante:"images/Nueva Zelanda/Nueva Zelanda Visitante.jpg" }}
   ]},
   { id:"H", teams:[
-    { id:"espana",    name:"España",         flag:"🇪🇸", kit:{ local:"images/España/España Local.jpg",                   visitante:"images/España/España Visitante.jpg" }},
-    { id:"caboverde", name:"Cabo Verde",     flag:"🇨🇻", kit:{ local:"images/Cabo Verde/Cabo Verde Local.jpg",           visitante:"images/Cabo Verde/Cabo Verde Visitante.jpg" }},
-    { id:"arabia",    name:"Arabia Saudita", flag:"🇸🇦", kit:{ local:"images/Arabia Saudita/Arabia Saudita Local.jpg",   visitante:"images/Arabia Saudita/Arabia Saudita Visitante.jpg" }},
-    { id:"uruguay",   name:"Uruguay",        flag:"🇺🇾", kit:{ local:"images/Uruguay/Uruguay Local.jpg",                 visitante:"images/Uruguay/Uruguay Visitante.jpg" }}
+    { id:"espana",    name:"España",         flag:"es",    kit:{ local:"images/España/España Local.jpg",                     visitante:"images/España/España Visitante.jpg" }},
+    { id:"caboverde", name:"Cabo Verde",     flag:"cv",    kit:{ local:"images/Cabo Verde/Cabo Verde Local.jpg",             visitante:"images/Cabo Verde/Cabo Verde Visitante.jpg" }},
+    { id:"arabia",    name:"Arabia Saudita", flag:"sa",    kit:{ local:"images/Arabia Saudita/Arabia Saudita Local.jpg",     visitante:"images/Arabia Saudita/Arabia Saudita Visitante.jpg" }},
+    { id:"uruguay",   name:"Uruguay",        flag:"uy",    kit:{ local:"images/Uruguay/Uruguay Local.jpg",                   visitante:"images/Uruguay/Uruguay Visitante.jpg" }}
   ]},
   { id:"I", teams:[
-    { id:"francia", name:"Francia", flag:"🇫🇷", kit:{ local:"images/Francia/Francia Local.jpg",   visitante:"images/Francia/Francia Visitante.jpg" }},
-    { id:"senegal", name:"Senegal", flag:"🇸🇳", kit:{ local:"images/Senegal/Senegal Local.jpg",   visitante:"images/Senegal/Senegal Visitante.jpg" }},
-    { id:"irak",    name:"Irak",    flag:"🇮🇶", kit:{ local:"images/Irak/Irak Local.jpg",         visitante:"images/Irak/Irak Visitante.jpg" }},
-    { id:"noruega", name:"Noruega", flag:"🇳🇴", kit:{ local:"images/Noruega/Noruega Local.jpg",   visitante:"images/Noruega/Noruega Visitante.jpg" }}
+    { id:"francia", name:"Francia", flag:"fr",    kit:{ local:"images/Francia/Francia Local.jpg",   visitante:"images/Francia/Francia Visitante.jpg" }},
+    { id:"senegal", name:"Senegal", flag:"sn",    kit:{ local:"images/Senegal/Senegal Local.jpg",   visitante:"images/Senegal/Senegal Visitante.jpg" }},
+    { id:"irak",    name:"Irak",    flag:"iq",    kit:{ local:"images/Irak/Irak Local.jpg",         visitante:"images/Irak/Irak Visitante.jpg" }},
+    { id:"noruega", name:"Noruega", flag:"no",    kit:{ local:"images/Noruega/Noruega Local.jpg",   visitante:"images/Noruega/Noruega Visitante.jpg" }}
   ]},
   { id:"J", teams:[
-    { id:"argentina", name:"Argentina", flag:"🇦🇷", kit:{ local:"images/Argentina/Argentina Local.jpg", visitante:"images/Argentina/Argentina Visitante.jpg" }},
-    { id:"argelia",   name:"Argelia",   flag:"🇩🇿", kit:{ local:"images/Argelia/Argelia Local.jpg",     visitante:"images/Argelia/Argelia Visitante.jpg" }},
-    { id:"austria",   name:"Austria",   flag:"🇦🇹", kit:{ local:"images/Austria/Austria Local.jpg",     visitante:"images/Austria/Austria Visitante.jpg" }},
-    { id:"jordania",  name:"Jordania",  flag:"🇯🇴", kit:{ local:"images/Jordania/Jordania Local.jpg",   visitante:"images/Jordania/Jordania Visitante.jpg" }}
+    { id:"argentina", name:"Argentina", flag:"ar",    kit:{ local:"images/Argentina/Argentina Local.jpg", visitante:"images/Argentina/Argentina Visitante.jpg" }},
+    { id:"argelia",   name:"Argelia",   flag:"dz",    kit:{ local:"images/Argelia/Argelia Local.jpg",     visitante:"images/Argelia/Argelia Visitante.jpg" }},
+    { id:"austria",   name:"Austria",   flag:"at",    kit:{ local:"images/Austria/Austria Local.jpg",     visitante:"images/Austria/Austria Visitante.jpg" }},
+    { id:"jordania",  name:"Jordania",  flag:"jo",    kit:{ local:"images/Jordania/Jordania Local.jpg",   visitante:"images/Jordania/Jordania Visitante.jpg" }}
   ]},
   { id:"K", teams:[
-    { id:"portugal",   name:"Portugal",   flag:"🇵🇹", kit:{ local:"images/Portugal/Portugal Local.jpg",       visitante:"images/Portugal/Portugal Visitante.jpg" }},
-    { id:"drcongo",    name:"RD Congo",   flag:"🇨🇩", kit:{ local:"images/RD Congo/RD Congo Local.jpg",       visitante:"images/RD Congo/RD Congo Visitante.jpg" }},
-    { id:"uzbekistan", name:"Uzbekistán", flag:"🇺🇿", kit:{ local:"images/Uzbekistán/Uzbekistán Local.jpg",   visitante:"images/Uzbekistán/Uzbekistán Visitante.jpg" }},
-    { id:"colombia",   name:"Colombia",   flag:"🇨🇴", kit:{ local:"images/Colombia/Colombia Local.jpg",       visitante:"images/Colombia/Colombia Visitante.jpg" }}
+    { id:"portugal",   name:"Portugal",   flag:"pt",    kit:{ local:"images/Portugal/Portugal Local.jpg",       visitante:"images/Portugal/Portugal Visitante.jpg" }},
+    { id:"drcongo",    name:"RD Congo",   flag:"cd",    kit:{ local:"images/RD Congo/RD Congo Local.jpg",       visitante:"images/RD Congo/RD Congo Visitante.jpg" }},
+    { id:"uzbekistan", name:"Uzbekistán", flag:"uz",    kit:{ local:"images/Uzbekistán/Uzbekistán Local.jpg",   visitante:"images/Uzbekistán/Uzbekistán Visitante.jpg" }},
+    { id:"colombia",   name:"Colombia",   flag:"co",    kit:{ local:"images/Colombia/Colombia Local.jpg",       visitante:"images/Colombia/Colombia Visitante.jpg" }}
   ]},
   { id:"L", teams:[
-    { id:"inglaterra", name:"Inglaterra", flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", kit:{ local:"images/Inglaterra/Inglaterra Local.jpg", visitante:"images/Inglaterra/Inglaterra Visitante.jpg" }},
-    { id:"croacia",    name:"Croacia",    flag:"🇭🇷", kit:{ local:"images/Croacia/Croacia Local.jpg",         visitante:"images/Croacia/Croacia Visitante.jpg" }},
-    { id:"ghana",      name:"Ghana",      flag:"🇬🇭", kit:{ local:"images/Ghana/Ghana Local.jpg",             visitante:"images/Ghana/Ghana Visitante.jpg" }},
-    { id:"panama",     name:"Panamá",     flag:"🇵🇦", kit:{ local:"images/Panamá/Panamá Local.jpg",           visitante:"images/Panamá/Panamá Visitante.jpg" }}
+    { id:"inglaterra", name:"Inglaterra", flag:"gb-eng",  kit:{ local:"images/Inglaterra/Inglaterra Local.jpg", visitante:"images/Inglaterra/Inglaterra Visitante.jpg" }},
+    { id:"croacia",    name:"Croacia",    flag:"hr",      kit:{ local:"images/Croacia/Croacia Local.jpg",       visitante:"images/Croacia/Croacia Visitante.jpg" }},
+    { id:"ghana",      name:"Ghana",      flag:"gh",      kit:{ local:"images/Ghana/Ghana Local.jpg",           visitante:"images/Ghana/Ghana Visitante.jpg" }},
+    { id:"panama",     name:"Panamá",     flag:"pa",      kit:{ local:"images/Panamá/Panamá Local.jpg",         visitante:"images/Panamá/Panamá Visitante.jpg" }}
   ]}
 ]};
 
@@ -350,6 +349,7 @@ function goTo(view) {
 function enableNav(id) { const b = document.getElementById('nav-'+id); if(b) b.disabled=false; }
 function getTeam(id) { return state.teams.find(t => t.id===id); }
 function getKitSrc(teamId) { const t = getTeam(teamId); return t.kit[state.kitChoices[teamId]||'local']; }
+function flagImg(code, size='22px') { return `<img src="flags/${code}.svg" alt="${code}" style="width:${size};height:auto;border-radius:2px;vertical-align:middle;flex-shrink:0">`; }
 function showToast(msg, d=2500) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
 
 // ── VIEW 1 ──
@@ -362,11 +362,10 @@ function renderKitsView() {
   });
   document.getElementById('kits-container').innerHTML=html;
   updateKitsProgress();
-  if(window.twemoji) twemoji.parse(document.getElementById('kits-container'));
 }
 function buildKitCard(team, chosen) {
   return `<div class="kit-card done" id="kitcard-${team.id}">
-    <div class="kit-card-header"><span class="kit-flag">${team.flag}</span><span class="kit-country">${team.name}</span><span class="kit-badge selected" id="badge-${team.id}">${chosen==='local'?'LOCAL':'VISITANTE'}</span></div>
+    <div class="kit-card-header">${flagImg(team.flag,'24px')}<span class="kit-country">${team.name}</span><span class="kit-badge selected" id="badge-${team.id}">${chosen==='local'?'LOCAL':'VISITANTE'}</span></div>
     <div class="kit-options">${buildKitOption(team,'local',chosen)}${buildKitOption(team,'visitante',chosen)}</div>
   </div>`;
 }
@@ -376,7 +375,7 @@ function buildKitOption(team, type, chosen) {
     onclick="selectKit('${team.id}','${type}')"
     ondblclick="openKitModal('${team.id}','${type}')">
     <img src="${team.kit[type]}" alt="${label}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-    <span style="display:none;width:100%;height:60%;align-items:center;justify-content:center;font-size:36px;opacity:0.25">${team.flag}</span>
+    <span style="display:none;width:100%;height:60%;align-items:center;justify-content:center;opacity:0.25">${flagImg(team.flag,'40px')}</span>
     <div class="kit-option-label">${label}</div>
     <label class="kit-upload-small" onclick="event.stopPropagation()">↑ subir<input type="file" accept="image/*" onchange="handleKitUpload(event,'${team.id}','${type}')"></label>
   </div>`;
@@ -408,7 +407,6 @@ function renderGroupsView() {
   state.groups.forEach(g => { if(!state.groupRankings[g.id]) state.groupRankings[g.id]=g.teams.map(t=>t.id); html+=buildGroupCard(g); });
   document.getElementById('groups-container').innerHTML=html;
   setupDragDrop(); updateGruposProgress();
-  if(window.twemoji) twemoji.parse(document.getElementById('groups-container'));
 }
 function buildGroupCard(group) {
   const ranking=state.groupRankings[group.id]||group.teams.map(t=>t.id);
@@ -418,8 +416,8 @@ function buildGroupCard(group) {
       ondblclick="openKitModal('${teamId}')">
       <span class="rank-pos">${idx+1}</span><div class="qualifier-badge ${qClass}"></div>
       <img src="${getKitSrc(teamId)}" class="rank-kit-thumb" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-      <span class="rank-kit-placeholder" style="display:none">${team.flag}</span>
-      <div class="rank-info"><div class="rank-flag-name"><span>${team.flag}</span><span>${team.name}</span></div><div class="rank-kit-type">${(state.kitChoices[teamId]||'local').toUpperCase()}</div></div>
+      <span class="rank-kit-placeholder" style="display:none">${flagImg(team.flag,'22px')}</span>
+      <div class="rank-info"><div class="rank-flag-name">${flagImg(team.flag,'18px')}<span>${team.name}</span></div><div class="rank-kit-type">${(state.kitChoices[teamId]||'local').toUpperCase()}</div></div>
       <span class="rank-handle">⠿</span>
     </li>`;
   }).join('');
@@ -466,14 +464,13 @@ function renderTercerosView() {
     const team=getTeam(teamId), sel=state.bestThirds.includes(teamId), dis=!sel&&state.bestThirds.length>=8;
     html+=`<div class="tercero-card ${sel?'selected':''} ${dis?'disabled':''}" onclick="toggleTercero('${teamId}')" ondblclick="openKitModal('${teamId}')">
       <img src="${getKitSrc(teamId)}" class="tercero-thumb" onerror="this.style.display='none'">
-      <div class="tercero-info"><div class="tercero-name">${team.flag} ${team.name}</div><div class="tercero-group">GRUPO ${groupId} — 3°</div></div>
+      <div class="tercero-info"><div class="tercero-name">${flagImg(team.flag,'16px')} ${team.name}</div><div class="tercero-group">GRUPO ${groupId} — 3°</div></div>
       ${sel?'<span style="color:var(--gold);font-size:16px">★</span>':''}
     </div>`;
   });
   html+=`</div>`;
   document.getElementById('terceros-container').innerHTML=html;
   updateTercerosProgress();
-  if(window.twemoji) twemoji.parse(document.getElementById('terceros-container'));
 }
 function toggleTercero(teamId) {
   const idx=state.bestThirds.indexOf(teamId);
@@ -573,7 +570,6 @@ function renderBracket() {
     </div>
     <div class="bracket-side">${rightHTML}</div>
   `;
-  if(window.twemoji) twemoji.parse(document.getElementById('bracket-container'));
 }
 
 function renderMatch(match) {
@@ -590,9 +586,9 @@ function renderMatch(match) {
       ${teamId ? `ondblclick="openKitModal('${teamId}')"` : ''}>`;
     if (team) {
       html += `<img src="${getKitSrc(teamId)}" class="bt-kit" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-               <span class="bt-placeholder" style="display:none">${team.flag}</span>
+               <span class="bt-placeholder" style="display:none">${flagImg(team.flag,'18px')}</span>
                <span class="bt-name">${team.name}</span>
-               <span class="bt-flag">${team.flag}</span>`;
+               ${flagImg(team.flag,'16px')}`;
       if (iW) html += `<button class="bt-undo" onclick="event.stopPropagation();undoWinner('${match.id}')" title="Deshacer">↩</button>`;
     } else {
       html += `<span class="bt-kit" style="opacity:0.2">?</span><span class="bt-name" style="color:var(--text-dim)">Por definir</span>`;
@@ -684,7 +680,7 @@ function openKitModal(teamId, type) {
   const kitType = type || state.kitChoices[teamId] || 'local';
   const src = team.kit[kitType];
   document.getElementById('kit-modal-img').src = src;
-  document.getElementById('kit-modal-name').textContent = team.flag + ' ' + team.name;
+  document.getElementById('kit-modal-name').innerHTML = flagImg(team.flag,'24px') + ' ' + team.name;
   document.getElementById('kit-modal-type').textContent = kitType.toUpperCase();
   document.getElementById('kit-modal-overlay').classList.add('open');
 }
