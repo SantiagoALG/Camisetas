@@ -474,7 +474,8 @@ function renderBracket() {
       [0,1].forEach(side => {
         const teamId=match.teams[side], team=teamId?getTeam(teamId):null;
         const iW=match.winner===teamId&&teamId!==null, iL=match.winner!==null&&match.winner!==teamId&&teamId!==null;
-        html+=`<div class="bracket-team${iW?' winner':''}${iL?' loser':''}${!teamId?' tbd':''}" ${teamId&&!match.winner?`onclick="pickWinner('${match.id}','${teamId}')"`:''>`;
+        const _ca=(teamId&&!match.winner)?'onclick="pickWinner(\''+match.id+'\',\''+teamId+'\')"':'';
+        html+='<div class="bracket-team'+(iW?' winner':'')+(iL?' loser':'')+(!teamId?' tbd':'')+'" '+_ca+'>';
         if(team){ html+=`<img src="${getKitSrc(teamId)}" class="bt-kit" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span class="bt-placeholder" style="display:none">${team.flag}</span><span class="bt-name">${team.name}</span><span class="bt-flag">${team.flag}</span>`; }
         else { html+=`<span class="bt-kit" style="opacity:0.2">?</span><span class="bt-name" style="color:var(--text-dim)">Por definir</span>`; }
         html+=`</div>`;
