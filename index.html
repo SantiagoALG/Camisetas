@@ -1063,7 +1063,7 @@ let mapLoaded = false;
 
 async function initMap() {
   if (mapLoaded) return;
-  mapLoaded = true;
+  mapLoaded = true; // optimistic lock to prevent double-init
 
   const container = document.getElementById('world-svg-container');
 
@@ -1071,12 +1071,24 @@ async function initMap() {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js');
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
 
-    const res = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
-    if (!res.ok) throw new Error('fetch failed');
-    const topo = await res.json();
+    let topo = null;
+    const sources = [
+      'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
+      'https://unpkg.com/world-atlas@2/countries-110m.json',
+      'https://raw.githubusercontent.com/topojson/world-atlas/master/countries-110m.json'
+    ];
+    for (const url of sources) {
+      try {
+        const res = await fetch(url);
+        if (res.ok) { topo = await res.json(); break; }
+      } catch(e) { continue; }
+    }
+
+    if (!topo) throw new Error('All sources failed');
     renderD3Map(container, topo);
   } catch(e) {
     console.warn('Map load error:', e);
+    mapLoaded = false; // allow retry
     showMapFallback(container);
   }
 }
@@ -1092,7 +1104,8 @@ function loadScript(src) {
 }
 
 function renderD3Map(container, topo) {
-  document.getElementById('map-loading').remove();
+  const loader = document.getElementById('map-loading');
+  if (loader) loader.remove();
 
   const W = container.clientWidth || 1100;
   const H = Math.round(W * 0.52);
@@ -1107,26 +1120,28 @@ function renderD3Map(container, topo) {
 
   const pathGen = d3.geoPath().projection(proj);
 
-  // Build features list: standard countries (excluding UK 826) + GB custom features
-  const countries = topojson.feature(topo, topo.objects.countries);
-  const stdFeatures = countries.features.filter(f => +f.id !== 826);
-  const allFeatures = [...stdFeatures, ...GB_FEATURES];
+  // 1. Ocean background (sphere) — FIRST layer
+  svg.append('path')
+    .datum({type:'Sphere'})
+    .attr('fill','var(--surface2)')
+    .attr('stroke','var(--border)')
+    .attr('stroke-width', 0.5)
+    .attr('d', pathGen);
 
-  // Draw graticule (grid lines)
+  // 2. Graticule (grid lines) — second layer
   svg.append('path')
     .datum(d3.geoGraticule()())
     .attr('fill','none')
     .attr('stroke','var(--border)')
-    .attr('stroke-width', 0.3)
+    .attr('stroke-width', 0.25)
     .attr('d', pathGen);
 
-  // Draw sphere background
-  svg.append('path')
-    .datum({type:'Sphere'})
-    .attr('fill','var(--surface2)')
-    .attr('d', pathGen);
+  // 3. Build features: standard countries (excluding UK 826) + custom GB features
+  const countries = topojson.feature(topo, topo.objects.countries);
+  const stdFeatures = countries.features.filter(f => +f.id !== 826);
+  const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  // Draw countries
+  // 4. Draw all countries — THIRD layer
   svg.selectAll('.country-path')
     .data(allFeatures)
     .join('path')
@@ -1150,12 +1165,12 @@ function renderD3Map(container, topo) {
       }
     });
 
-  // Draw country borders
+  // 5. Country borders on top — FOURTH layer
   svg.append('path')
-    .datum(topojson.mesh(topo, topo.objects.countries, (a,b) => a !== b))
+    .datum(topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b))
     .attr('fill', 'none')
     .attr('stroke', 'var(--bg)')
-    .attr('stroke-width', 0.5)
+    .attr('stroke-width', 0.4)
     .attr('d', pathGen);
 }
 
