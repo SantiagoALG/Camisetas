@@ -116,8 +116,9 @@ nav{display:flex;gap:4px}
 .bracket-connector{width:20px;position:relative;flex-shrink:0}
 .bracket-connector::before{content:'';position:absolute;right:0;top:25%;bottom:25%;width:1px;background:var(--border)}
 .bracket-connector::after{content:'';position:absolute;right:0;top:50%;width:20px;height:1px;background:var(--border)}
-.bracket-side.right .bracket-connector::before{right:auto;left:0}
-.bracket-side.right .bracket-connector::after{right:auto;left:0}
+.bc-left::before{right:auto;left:0}
+.bc-left::after{right:auto;left:0}
+.bracket-side.right .bracket-match-wrapper{flex-direction:row-reverse}
 .champion-view{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:24px}
 .champion-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--text-muted)}
 .champion-kit{width:200px;height:240px;object-fit:contain;filter:drop-shadow(0 0 40px rgba(200,242,48,0.3));animation:float 3s ease-in-out infinite}
@@ -525,34 +526,46 @@ function buildBracket() {
 }
 
 function renderBracket() {
-  const renderSide = (rounds, side) => {
-    let html = '';
-    const roundOrder = side === 'right' ? [...rounds].reverse() : rounds;
-    roundOrder.forEach((round, ri) => {
-      const isFirst = ri === 0;
-      html += `<div class="bracket-round"><div class="bracket-round-header">${round.name}</div><div class="bracket-matches">`;
-      round.matches.forEach(match => {
-        html += `<div class="bracket-match-wrapper">`;
-        if (!isFirst) html += `<div class="bracket-connector"></div>`;
-        html += renderMatch(match);
-        html += `</div>`;
-      });
-      html += `</div></div>`;
+  // Left side: R32 → R16 → QF → SF (left to right, connectors on right)
+  // Center: Final
+  // Right side: SF → QF → R16 → R32 (left to right, connectors on left, reversed round order)
+
+  const renderRound = (round, ri, isFirst, side) => {
+    const connectorSide = side === 'right' ? 'left' : 'right';
+    let html = `<div class="bracket-round">
+      <div class="bracket-round-header">${round.name}</div>
+      <div class="bracket-matches">`;
+    round.matches.forEach(match => {
+      html += `<div class="bracket-match-wrapper">`;
+      if (!isFirst) html += `<div class="bracket-connector bc-${connectorSide}"></div>`;
+      html += renderMatch(match);
+      html += `</div>`;
     });
+    html += `</div></div>`;
     return html;
   };
 
-  const final = state.bracket.final;
-  const leftHTML  = renderSide(state.bracket.left,  'left');
-  const rightHTML = renderSide(state.bracket.right, 'right');
+  // Left side: normal order (R32 first)
+  let leftHTML = '';
+  state.bracket.left.forEach((round, ri) => {
+    leftHTML += renderRound(round, ri, ri === 0, 'left');
+  });
 
+  // Right side: reversed order (SF first, R32 last) — converges toward center
+  let rightHTML = '';
+  const rightReversed = [...state.bracket.right].reverse();
+  rightReversed.forEach((round, ri) => {
+    rightHTML += renderRound(round, ri, ri === 0, 'right');
+  });
+
+  const final = state.bracket.final;
   document.getElementById('bracket-container').innerHTML = `
-    <div class="bracket-side left">${leftHTML}</div>
+    <div class="bracket-side">${leftHTML}</div>
     <div class="bracket-final-col">
       <div class="bracket-final-label">FINAL</div>
       ${renderMatch(final)}
     </div>
-    <div class="bracket-side right">${rightHTML}</div>
+    <div class="bracket-side">${rightHTML}</div>
   `;
 }
 
@@ -584,11 +597,11 @@ function renderMatch(match) {
 }
 
 function findMatch(matchId) {
-  // Search left, right, and final
-  for (const side of [state.bracket.left, state.bracket.right]) {
-    for (let ri = 0; ri < side.length; ri++) {
-      for (let mi = 0; mi < side[ri].matches.length; mi++) {
-        if (side[ri].matches[mi].id === matchId) return { side, ri, mi };
+  for (const [sideArr, sideName] of [[state.bracket.left,'left'],[state.bracket.right,'right']]) {
+    for (let ri = 0; ri < sideArr.length; ri++) {
+      for (let mi = 0; mi < sideArr[ri].matches.length; mi++) {
+        if (sideArr[ri].matches[mi].id === matchId)
+          return { side: sideArr, sideName, ri, mi };
       }
     }
   }
@@ -607,17 +620,14 @@ function pickWinner(matchId, winnerId) {
     return;
   }
 
-  const { side, ri, mi } = loc;
+  const { side, sideName, ri, mi } = loc;
   const match = side[ri].matches[mi];
   match.winner = winnerId;
 
-  // Advance to next round within side, or to final
   if (ri + 1 < side.length) {
     side[ri+1].matches[Math.floor(mi/2)].teams[mi%2] = winnerId;
   } else {
-    // This side's SF winner goes to the final
-    // Left side → final slot 0, Right side → final slot 1
-    const finalSlot = (side === state.bracket.left) ? 0 : 1;
+    const finalSlot = sideName === 'left' ? 0 : 1;
     state.bracket.final.teams[finalSlot] = winnerId;
   }
 
@@ -635,23 +645,20 @@ function undoWinner(matchId) {
     return;
   }
 
-  const { side, ri, mi } = loc;
+  const { side, sideName, ri, mi } = loc;
   const match = side[ri].matches[mi];
   const prevWinner = match.winner;
   match.winner = null;
 
-  // Clear the winner from the next round / final
   if (ri + 1 < side.length) {
     const nextMatch = side[ri+1].matches[Math.floor(mi/2)];
     const slot = mi % 2;
-    // Only clear if it's still the same team (user might have already advanced further)
     if (nextMatch.teams[slot] === prevWinner) {
       nextMatch.teams[slot] = null;
-      // Also cascade: if that next match had a winner, undo it too
       if (nextMatch.winner) undoWinner(nextMatch.id);
     }
   } else {
-    const finalSlot = (side === state.bracket.left) ? 0 : 1;
+    const finalSlot = sideName === 'left' ? 0 : 1;
     if (state.bracket.final.teams[finalSlot] === prevWinner) {
       state.bracket.final.teams[finalSlot] = null;
       if (state.bracket.final.winner) state.bracket.final.winner = null;
