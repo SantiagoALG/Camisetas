@@ -88,18 +88,27 @@ nav{display:flex;gap:4px}
 .terceros-note strong{color:var(--text)}
 .legend-item{display:flex;align-items:center;gap:6px}
 .bracket-wrapper{overflow-x:auto;padding-bottom:20px}
-.bracket{display:flex;gap:0;min-width:max-content;padding:20px 0}
-.bracket-round{display:flex;flex-direction:column;min-width:200px}
-.bracket-round-header{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:var(--text-muted);text-align:center;padding:0 12px 20px;white-space:nowrap}
+.bracket{display:flex;align-items:stretch;min-width:max-content;padding:20px 0;gap:0}
+.bracket-side{display:flex;flex-direction:row;align-items:stretch}
+.bracket-side.right{flex-direction:row-reverse}
+.bracket-final-col{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:210px;padding:0 8px}
+.bracket-final-label{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:3px;color:var(--accent);text-align:center;margin-bottom:12px}
+.bracket-round{display:flex;flex-direction:column;min-width:210px}
+.bracket-round-header{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:var(--text-muted);text-align:center;padding:0 12px 16px;white-space:nowrap}
 .bracket-matches{display:flex;flex-direction:column;flex:1;justify-content:space-around}
 .bracket-match-wrapper{display:flex;align-items:center;position:relative}
+.bracket-side.right .bracket-match-wrapper{flex-direction:row-reverse}
 .bracket-match{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;width:188px;transition:var(--transition)}
 .bracket-team{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;transition:var(--transition);border-bottom:1px solid var(--border);position:relative}
 .bracket-team:last-child{border-bottom:none}
-.bracket-team:hover:not(.tbd):not(.winner){background:var(--surface2)}
-.bracket-team.winner{background:var(--accent-glow);color:var(--accent);cursor:default}
+.bracket-team:hover:not(.tbd):not(.winner):not(.locked){background:var(--surface2)}
+.bracket-team.winner{background:var(--accent-glow);color:var(--accent)}
+.bracket-team.winner:hover{background:var(--accent-glow)}
 .bracket-team.loser{opacity:0.35}
 .bracket-team.tbd{opacity:0.4;cursor:default}
+.bracket-team.locked{cursor:default}
+.bt-undo{margin-left:auto;font-size:11px;background:none;border:none;color:var(--text-dim);cursor:pointer;padding:0 2px;flex-shrink:0;transition:var(--transition)}
+.bt-undo:hover{color:var(--red)}
 .bt-kit{width:28px;height:34px;object-fit:contain;flex-shrink:0}
 .bt-placeholder{width:28px;height:34px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .bt-name{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -107,6 +116,8 @@ nav{display:flex;gap:4px}
 .bracket-connector{width:20px;position:relative;flex-shrink:0}
 .bracket-connector::before{content:'';position:absolute;right:0;top:25%;bottom:25%;width:1px;background:var(--border)}
 .bracket-connector::after{content:'';position:absolute;right:0;top:50%;width:20px;height:1px;background:var(--border)}
+.bracket-side.right .bracket-connector::before{right:auto;left:0}
+.bracket-side.right .bracket-connector::after{right:auto;left:0}
 .champion-view{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;gap:24px}
 .champion-label{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--text-muted)}
 .champion-kit{width:200px;height:240px;object-fit:contain;filter:drop-shadow(0 0 40px rgba(200,242,48,0.3));animation:float 3s ease-in-out infinite}
@@ -138,6 +149,18 @@ nav{display:flex;gap:4px}
 ::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#555}
 @media(max-width:768px){header{padding:16px 20px}.container{padding:24px 20px 100px}.action-bar{padding:12px 20px}.kit-grid{grid-template-columns:1fr}.groups-grid{grid-template-columns:1fr}}
+.kit-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 250ms ease}
+.kit-modal-overlay.open{opacity:1;pointer-events:all}
+.kit-modal{background:var(--surface);border:1px solid var(--border-bright);border-radius:8px;padding:28px 24px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:400px;width:90%;position:relative;transform:translateY(12px);transition:transform 250ms ease}
+.kit-modal-overlay.open .kit-modal{transform:translateY(0)}
+.kit-modal-img{max-width:280px;max-height:360px;object-fit:contain;filter:drop-shadow(0 0 24px rgba(200,242,48,0.2))}
+.kit-modal-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:var(--text)}
+.kit-modal-type{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent)}
+.kit-modal-close{position:absolute;top:10px;right:10px;background:none;border:1px solid var(--border);color:var(--text-muted);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
+.kit-modal-close:hover{border-color:var(--border-bright);color:var(--text)}
+.kit-upload-small{position:absolute;bottom:34px;right:4px;background:rgba(0,0,0,0.75);border:1px solid var(--border-bright);color:var(--text-muted);font-size:10px;padding:3px 6px;border-radius:3px;cursor:pointer;z-index:2;transition:var(--transition);white-space:nowrap;font-family:'DM Mono',monospace;letter-spacing:0.5px}
+.kit-upload-small:hover{color:var(--text);border-color:var(--accent)}
+.kit-upload-small input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
 </style>
 </head>
 <body>
@@ -153,6 +176,16 @@ nav{display:flex;gap:4px}
 </header>
 
 <div class="toast" id="toast"></div>
+
+<!-- KIT MODAL -->
+<div class="kit-modal-overlay" id="kit-modal-overlay" onclick="closeKitModal(event)">
+  <div class="kit-modal">
+    <button class="kit-modal-close" onclick="closeKitModal()">✕</button>
+    <img class="kit-modal-img" id="kit-modal-img" src="" alt="">
+    <div class="kit-modal-name" id="kit-modal-name"></div>
+    <div class="kit-modal-type" id="kit-modal-type"></div>
+  </div>
+</div>
 
 <div class="view active" id="view-kits">
   <div class="container">
@@ -334,12 +367,13 @@ function buildKitCard(team, chosen) {
 }
 function buildKitOption(team, type, chosen) {
   const label=type==='local'?'Local':'Visitante', sel=chosen===type?'selected':'';
-  return `<div class="kit-option ${sel}" id="kito-${team.id}-${type}" onclick="selectKit('${team.id}','${type}')">
+  return `<div class="kit-option ${sel}" id="kito-${team.id}-${type}"
+    onclick="selectKit('${team.id}','${type}')"
+    ondblclick="openKitModal('${team.id}','${type}')">
     <img src="${team.kit[type]}" alt="${label}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
     <span style="display:none;width:100%;height:60%;align-items:center;justify-content:center;font-size:36px;opacity:0.25">${team.flag}</span>
     <div class="kit-option-label">${label}</div>
-    <div class="kit-upload-overlay"><span class="upload-icon">↑</span><span>Subir imagen</span></div>
-    <input type="file" accept="image/*" class="kit-upload-btn" onchange="handleKitUpload(event,'${team.id}','${type}')">
+    <label class="kit-upload-small" onclick="event.stopPropagation()">↑ subir<input type="file" accept="image/*" onchange="handleKitUpload(event,'${team.id}','${type}')"></label>
   </div>`;
 }
 function selectKit(teamId, type) {
@@ -374,7 +408,8 @@ function buildGroupCard(group) {
   const ranking=state.groupRankings[group.id]||group.teams.map(t=>t.id);
   const items=ranking.map((teamId,idx) => {
     const team=getTeam(teamId), qClass=idx===0?'q1':idx===1?'q2':idx===2?'q3':'q-out';
-    return `<li class="ranking-item" draggable="true" data-team="${teamId}" data-group="${group.id}">
+    return `<li class="ranking-item" draggable="true" data-team="${teamId}" data-group="${group.id}"
+      ondblclick="openKitModal('${teamId}')">
       <span class="rank-pos">${idx+1}</span><div class="qualifier-badge ${qClass}"></div>
       <img src="${getKitSrc(teamId)}" class="rank-kit-thumb" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
       <span class="rank-kit-placeholder" style="display:none">${team.flag}</span>
@@ -423,7 +458,7 @@ function renderTercerosView() {
   let html=`<div class="terceros-grid">`;
   thirds.forEach(({teamId,groupId}) => {
     const team=getTeam(teamId), sel=state.bestThirds.includes(teamId), dis=!sel&&state.bestThirds.length>=8;
-    html+=`<div class="tercero-card ${sel?'selected':''} ${dis?'disabled':''}" onclick="toggleTercero('${teamId}')">
+    html+=`<div class="tercero-card ${sel?'selected':''} ${dis?'disabled':''}" onclick="toggleTercero('${teamId}')" ondblclick="openKitModal('${teamId}')">
       <img src="${getKitSrc(teamId)}" class="tercero-thumb" onerror="this.style.display='none'">
       <div class="tercero-info"><div class="tercero-name">${team.flag} ${team.name}</div><div class="tercero-group">GRUPO ${groupId} — 3°</div></div>
       ${sel?'<span style="color:var(--gold);font-size:16px">★</span>':''}
@@ -454,58 +489,196 @@ function getQualifiedTeams() {
     ...state.bestThirds
   ];
 }
+
 function buildBracket() {
-  const teams=getQualifiedTeams(); state.bracket={rounds:[]};
-  const r32=[]; for(let i=0;i<32;i+=2) r32.push({id:`r32-${i/2}`,teams:[teams[i],teams[i+1]],winner:null});
-  state.bracket.rounds.push({name:'DIECISEISAVOS',matches:r32});
-  ['OCTAVOS','CUARTOS','SEMIFINAL','FINAL'].forEach((name,ri) => {
-    const prev=16/Math.pow(2,ri+1), matches=[];
-    for(let i=0;i<prev;i++) matches.push({id:`r${ri+1}-${i}`,teams:[null,null],winner:null});
-    state.bracket.rounds.push({name,matches});
-  });
+  const teams = getQualifiedTeams(); // 32 teams
+  state.bracket = { left: [], right: [], final: null };
+
+  // Split 32 teams: left side gets teams 0-15, right side 16-31
+  const leftTeams  = teams.slice(0, 16);
+  const rightTeams = teams.slice(16, 32);
+
+  // Build left side rounds: R32(8 matches) → R16(4) → QF(2) → SF(1)
+  const buildSide = (sideTeams, prefix) => {
+    const rounds = [];
+    // R32 — 8 matches
+    const r32 = [];
+    for (let i = 0; i < 16; i += 2)
+      r32.push({ id:`${prefix}-r32-${i/2}`, teams:[sideTeams[i], sideTeams[i+1]], winner:null });
+    rounds.push({ name:'DIECISEISAVOS', matches: r32 });
+    // R16, QF, SF
+    ['OCTAVOS','CUARTOS','SEMIFINAL'].forEach((name, ri) => {
+      const count = 4 / Math.pow(2, ri);
+      const matches = [];
+      for (let i = 0; i < count; i++)
+        matches.push({ id:`${prefix}-r${ri+1}-${i}`, teams:[null,null], winner:null });
+      rounds.push({ name, matches });
+    });
+    return rounds;
+  };
+
+  state.bracket.left  = buildSide(leftTeams,  'L');
+  state.bracket.right = buildSide(rightTeams, 'R');
+  state.bracket.final = { id:'final-0', teams:[null,null], winner:null };
+
   renderBracket();
 }
+
 function renderBracket() {
-  let html='';
-  state.bracket.rounds.forEach((round,ri) => {
-    html+=`<div class="bracket-round"><div class="bracket-round-header">${round.name}</div><div class="bracket-matches">`;
-    round.matches.forEach(match => {
-      html+=`<div class="bracket-match-wrapper">${ri>0?'<div class="bracket-connector"></div>':''}<div class="bracket-match" id="match-${match.id}">`;
-      [0,1].forEach(side => {
-        const teamId=match.teams[side], team=teamId?getTeam(teamId):null;
-        const iW=match.winner===teamId&&teamId!==null, iL=match.winner!==null&&match.winner!==teamId&&teamId!==null;
-        const _ca=(teamId&&!match.winner)?'onclick="pickWinner(\''+match.id+'\',\''+teamId+'\')"':'';
-        html+='<div class="bracket-team'+(iW?' winner':'')+(iL?' loser':'')+(!teamId?' tbd':'')+'" '+_ca+'>';
-        if(team){ html+=`<img src="${getKitSrc(teamId)}" class="bt-kit" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><span class="bt-placeholder" style="display:none">${team.flag}</span><span class="bt-name">${team.name}</span><span class="bt-flag">${team.flag}</span>`; }
-        else { html+=`<span class="bt-kit" style="opacity:0.2">?</span><span class="bt-name" style="color:var(--text-dim)">Por definir</span>`; }
-        html+=`</div>`;
+  const renderSide = (rounds, side) => {
+    let html = '';
+    const roundOrder = side === 'right' ? [...rounds].reverse() : rounds;
+    roundOrder.forEach((round, ri) => {
+      const isFirst = ri === 0;
+      html += `<div class="bracket-round"><div class="bracket-round-header">${round.name}</div><div class="bracket-matches">`;
+      round.matches.forEach(match => {
+        html += `<div class="bracket-match-wrapper">`;
+        if (!isFirst) html += `<div class="bracket-connector"></div>`;
+        html += renderMatch(match);
+        html += `</div>`;
       });
-      html+=`</div></div>`;
+      html += `</div></div>`;
     });
-    html+=`</div></div>`;
+    return html;
+  };
+
+  const final = state.bracket.final;
+  const leftHTML  = renderSide(state.bracket.left,  'left');
+  const rightHTML = renderSide(state.bracket.right, 'right');
+
+  document.getElementById('bracket-container').innerHTML = `
+    <div class="bracket-side left">${leftHTML}</div>
+    <div class="bracket-final-col">
+      <div class="bracket-final-label">FINAL</div>
+      ${renderMatch(final)}
+    </div>
+    <div class="bracket-side right">${rightHTML}</div>
+  `;
+}
+
+function renderMatch(match) {
+  let html = `<div class="bracket-match" id="match-${match.id}">`;
+  [0,1].forEach(side => {
+    const teamId = match.teams[side];
+    const team   = teamId ? getTeam(teamId) : null;
+    const iW = match.winner === teamId && teamId !== null;
+    const iL = match.winner !== null && match.winner !== teamId && teamId !== null;
+    const clickable = teamId && !match.winner;
+    const cls = 'bracket-team' + (iW?' winner':'') + (iL?' loser':'') + (!teamId?' tbd':'') + (match.winner&&!iW&&!iL?' locked':'');
+    html += `<div class="${cls}"
+      ${clickable ? `onclick="pickWinner('${match.id}','${teamId}')"` : ''}
+      ${teamId ? `ondblclick="openKitModal('${teamId}')"` : ''}>`;
+    if (team) {
+      html += `<img src="${getKitSrc(teamId)}" class="bt-kit" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+               <span class="bt-placeholder" style="display:none">${team.flag}</span>
+               <span class="bt-name">${team.name}</span>
+               <span class="bt-flag">${team.flag}</span>`;
+      if (iW) html += `<button class="bt-undo" onclick="event.stopPropagation();undoWinner('${match.id}')" title="Deshacer">↩</button>`;
+    } else {
+      html += `<span class="bt-kit" style="opacity:0.2">?</span><span class="bt-name" style="color:var(--text-dim)">Por definir</span>`;
+    }
+    html += `</div>`;
   });
-  document.getElementById('bracket-container').innerHTML=html;
+  html += `</div>`;
+  return html;
 }
+
+function findMatch(matchId) {
+  // Search left, right, and final
+  for (const side of [state.bracket.left, state.bracket.right]) {
+    for (let ri = 0; ri < side.length; ri++) {
+      for (let mi = 0; mi < side[ri].matches.length; mi++) {
+        if (side[ri].matches[mi].id === matchId) return { side, ri, mi };
+      }
+    }
+  }
+  if (state.bracket.final.id === matchId) return { isFinal: true };
+  return null;
+}
+
 function pickWinner(matchId, winnerId) {
-  let ri=-1, mi=-1;
-  state.bracket.rounds.forEach((r,a)=>r.matches.forEach((m,b)=>{ if(m.id===matchId){ri=a;mi=b;} }));
-  if(ri===-1) return;
-  const match=state.bracket.rounds[ri].matches[mi]; match.winner=winnerId;
-  if(ri+1<state.bracket.rounds.length){
-    state.bracket.rounds[ri+1].matches[Math.floor(mi/2)].teams[mi%2]=winnerId;
-    renderBracket(); showToast(`${getTeam(winnerId).flag} ${getTeam(winnerId).name} avanza`);
-  } else { showChampion(winnerId); }
+  const loc = findMatch(matchId);
+  if (!loc) return;
+
+  if (loc.isFinal) {
+    state.bracket.final.winner = winnerId;
+    renderBracket();
+    showToast(`🏆 ${getTeam(winnerId).flag} ${getTeam(winnerId).name} — CAMPEÓN`);
+    return;
+  }
+
+  const { side, ri, mi } = loc;
+  const match = side[ri].matches[mi];
+  match.winner = winnerId;
+
+  // Advance to next round within side, or to final
+  if (ri + 1 < side.length) {
+    side[ri+1].matches[Math.floor(mi/2)].teams[mi%2] = winnerId;
+  } else {
+    // This side's SF winner goes to the final
+    // Left side → final slot 0, Right side → final slot 1
+    const finalSlot = (side === state.bracket.left) ? 0 : 1;
+    state.bracket.final.teams[finalSlot] = winnerId;
+  }
+
+  renderBracket();
+  showToast(`${getTeam(winnerId).flag} ${getTeam(winnerId).name} avanza`);
 }
-function showChampion(teamId) {
-  const team=getTeam(teamId);
-  document.getElementById('bracket-container').innerHTML=`<div class="champion-view" style="width:100%;min-width:0">
-    <div class="champion-label">CAMPEÓN DEL KIT BRACKET</div>
-    <div class="champion-flag">${team.flag}</div>
-    <img src="${getKitSrc(teamId)}" class="champion-kit" onerror="this.style.fontSize='120px'">
-    <div class="champion-name">${team.name.toUpperCase()}</div>
-    <button class="btn btn-ghost" onclick="renderBracket()" style="margin-top:16px">← Ver bracket completo</button>
-  </div>`;
+
+function undoWinner(matchId) {
+  const loc = findMatch(matchId);
+  if (!loc) return;
+
+  if (loc.isFinal) {
+    state.bracket.final.winner = null;
+    renderBracket();
+    return;
+  }
+
+  const { side, ri, mi } = loc;
+  const match = side[ri].matches[mi];
+  const prevWinner = match.winner;
+  match.winner = null;
+
+  // Clear the winner from the next round / final
+  if (ri + 1 < side.length) {
+    const nextMatch = side[ri+1].matches[Math.floor(mi/2)];
+    const slot = mi % 2;
+    // Only clear if it's still the same team (user might have already advanced further)
+    if (nextMatch.teams[slot] === prevWinner) {
+      nextMatch.teams[slot] = null;
+      // Also cascade: if that next match had a winner, undo it too
+      if (nextMatch.winner) undoWinner(nextMatch.id);
+    }
+  } else {
+    const finalSlot = (side === state.bracket.left) ? 0 : 1;
+    if (state.bracket.final.teams[finalSlot] === prevWinner) {
+      state.bracket.final.teams[finalSlot] = null;
+      if (state.bracket.final.winner) state.bracket.final.winner = null;
+    }
+  }
+
+  renderBracket();
+  showToast('Resultado deshecho');
 }
+
+// ════════════════════════════════════════
+// MODAL — ver camiseta en grande
+// ════════════════════════════════════════
+function openKitModal(teamId, type) {
+  const team = getTeam(teamId);
+  const kitType = type || state.kitChoices[teamId] || 'local';
+  const src = team.kit[kitType];
+  document.getElementById('kit-modal-img').src = src;
+  document.getElementById('kit-modal-name').textContent = team.flag + ' ' + team.name;
+  document.getElementById('kit-modal-type').textContent = kitType.toUpperCase();
+  document.getElementById('kit-modal-overlay').classList.add('open');
+}
+function closeKitModal(e) {
+  if (e && e.target !== document.getElementById('kit-modal-overlay')) return;
+  document.getElementById('kit-modal-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') document.getElementById('kit-modal-overlay').classList.remove('open'); });
 
 init();
 </script>
