@@ -999,12 +999,12 @@ const NUM_TO_ISO = {
   818:'EG',364:'IR',554:'NZ',724:'ES',132:'CV',682:'SA',858:'UY',250:'FR',
   686:'SN',368:'IQ',578:'NO',32:'AR',12:'DZ',40:'AT',400:'JO',620:'PT',
   180:'CD',860:'UZ',170:'CO',191:'HR',288:'GH',591:'PA',
-  826:'GB' // UK → both England & Scotland shown together
+  826:'GB' // UK → Scotland first (north), then England (south)
 };
 
 // Special multi-team mapping for UK
 const MULTI_TEAM = {
-  'GB': ['inglaterra', 'escocia']
+  'GB': ['escocia', 'inglaterra']
 };
 
 const GB_FEATURES = []; // No custom GB features — UK handled via numeric ID below
@@ -1174,6 +1174,14 @@ function showMapTooltip(event, teamIds) {
       ${ids.length > 1 && teamId !== ids[ids.length-1] ? '<div style="height:1px;background:var(--border);margin:10px 0"></div>' : ''}
     `;
   }).join('');
+
+  // Add disclaimer for UK
+  if (ids.includes('escocia') || ids.includes('inglaterra')) {
+    container.innerHTML += `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--f-display);font-size:9px;letter-spacing:0.5px;color:var(--text-dim);line-height:1.4">
+        * El mapa muestra el Reino Unido completo. Gales e Irlanda del Norte no participan en el torneo.
+      </div>`;
+  }
 
   positionTooltip(event, tooltip);
   tooltip.classList.add('visible');
