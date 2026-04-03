@@ -1130,20 +1130,13 @@ function renderCanvasMap(container, topo) {
 function drawMap(hoveredTeamId, pathGen) {
   mapCtx.clearRect(0, 0, mapW, mapH);
 
-  // Draw Natural Earth sphere (oval ocean)
+  // 1. Ocean oval (sphere) — background
   mapCtx.beginPath();
   pathGen({ type: 'Sphere' });
   mapCtx.fillStyle = '#d6e0f5';
   mapCtx.fill();
 
-  // Draw graticule (subtle grid)
-  mapCtx.beginPath();
-  pathGen(d3.geoGraticule()());
-  mapCtx.strokeStyle = 'rgba(255,255,255,0.25)';
-  mapCtx.lineWidth = 0.4;
-  mapCtx.stroke();
-
-  // Draw each country
+  // 2. Countries ON TOP of ocean
   mapFeatures.forEach(({ feature, teamId }) => {
     const isParticipant = !!teamId;
     const isHovered = teamId === hoveredTeamId;
@@ -1157,11 +1150,49 @@ function drawMap(hoveredTeamId, pathGen) {
     mapCtx.stroke();
   });
 
-  // Redraw sphere outline on top
+  // 3. Sphere border on top of everything
   mapCtx.beginPath();
   pathGen({ type: 'Sphere' });
   mapCtx.strokeStyle = '#b8c8e8';
   mapCtx.lineWidth = 1;
+  mapCtx.stroke();
+}
+
+function drawMap(hoveredTeamId, pathGen) {
+  mapCtx.clearRect(0, 0, mapW, mapH);
+
+  // 1. Background fill (canvas background, outside the oval)
+  mapCtx.fillStyle = '#f5f2eb';
+  mapCtx.fillRect(0, 0, mapW, mapH);
+
+  // 2. Ocean oval — clip to this shape
+  mapCtx.save();
+  mapCtx.beginPath();
+  pathGen({ type: 'Sphere' });
+  mapCtx.fillStyle = '#d6e0f5';
+  mapCtx.fill();
+  mapCtx.clip(); // clip everything inside the oval
+
+  // 3. Countries inside the clip
+  mapFeatures.forEach(({ feature, teamId }) => {
+    const isParticipant = !!teamId;
+    const isHovered = teamId === hoveredTeamId;
+    mapCtx.beginPath();
+    pathGen(feature);
+    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c4bfb4';
+    mapCtx.fill();
+    mapCtx.strokeStyle = 'rgba(245,242,235,0.8)';
+    mapCtx.lineWidth = 0.5;
+    mapCtx.stroke();
+  });
+
+  mapCtx.restore();
+
+  // 4. Sphere border on top
+  mapCtx.beginPath();
+  pathGen({ type: 'Sphere' });
+  mapCtx.strokeStyle = '#a0b4d8';
+  mapCtx.lineWidth = 1.5;
   mapCtx.stroke();
 }
 
@@ -1171,13 +1202,18 @@ function onMapMouseMove(event, pathGen) {
   const mx = (event.clientX - rect.left) * scaleX;
   const my = (event.clientY - rect.top) * scaleX;
 
+  // Invert projection to get geographic coordinates
+  const coords = mapProjection.invert([mx, my]);
+  if (!coords) { drawMap(null, pathGen); hideMapTooltip(); return; }
+
   let found = null;
-  for (let i = mapFeatures.length - 1; i >= 0; i--) {
-    const { feature, teamId } = mapFeatures[i];
+  // Check standard countries FIRST (more precise), GB custom features last
+  const stdFeatures = mapFeatures.filter(f => !f.feature.id?.toString().includes('-'));
+  const gbFeatures  = mapFeatures.filter(f =>  f.feature.id?.toString().includes('-'));
+
+  for (const { feature, teamId } of [...stdFeatures, ...gbFeatures]) {
     if (!teamId) continue;
-    // Use D3 geoContains for accurate hit testing (handles projection correctly)
-    const coords = mapProjection.invert([mx, my]);
-    if (coords && d3.geoContains(feature, coords)) {
+    if (d3.geoContains(feature, coords)) {
       found = teamId;
       break;
     }
