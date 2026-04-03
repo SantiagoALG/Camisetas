@@ -267,7 +267,7 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 #world-svg-container{width:100%;min-height:400px;position:relative;background:#e8e4db;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
 #world-svg-container svg{width:100%;height:auto;display:block}
 .country-path{transition:fill 150ms ease}
-.map-tooltip{position:fixed;pointer-events:none;z-index:500;opacity:0;transition:opacity 180ms ease;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:220px;max-width:260px;box-shadow:0 16px 48px rgba(0,0,0,0.15)}
+.map-tooltip{position:fixed;pointer-events:none;z-index:500;opacity:0;transition:opacity 180ms ease;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:220px;max-width:320px;box-shadow:0 16px 48px rgba(0,0,0,0.15)}
 .map-tooltip.visible{opacity:1}
 .map-tt-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .map-tt-flag{width:22px;height:auto;border-radius:2px;flex-shrink:0}
@@ -402,21 +402,7 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
     </div>
   </div>
   <div class="map-tooltip" id="map-tooltip">
-    <div class="map-tt-header">
-      <img class="map-tt-flag" id="tt-flag" src="" alt="">
-      <span class="map-tt-name" id="tt-name"></span>
-      <span class="map-tt-group" id="tt-group"></span>
-    </div>
-    <div class="map-tt-kits">
-      <div class="map-tt-kit" id="tt-kit-local">
-        <img id="tt-img-local" src="" alt="Local">
-        <span class="map-tt-kit-label">Local</span>
-      </div>
-      <div class="map-tt-kit" id="tt-kit-visit">
-        <img id="tt-img-visit" src="" alt="Visitante">
-        <span class="map-tt-kit-label">Visitante</span>
-      </div>
-    </div>
+    <div id="tt-teams-container"></div>
   </div>
 </div>
 
@@ -1013,7 +999,12 @@ const NUM_TO_ISO = {
   818:'EG',364:'IR',554:'NZ',724:'ES',132:'CV',682:'SA',858:'UY',250:'FR',
   686:'SN',368:'IQ',578:'NO',32:'AR',12:'DZ',40:'AT',400:'JO',620:'PT',
   180:'CD',860:'UZ',170:'CO',191:'HR',288:'GH',591:'PA',
-  826:'GB-ENG'  // UK polygon → England (both England & Scotland share this shape)
+  826:'GB' // UK → both England & Scotland shown together
+};
+
+// Special multi-team mapping for UK
+const MULTI_TEAM = {
+  'GB': ['inglaterra', 'escocia']
 };
 
 const GB_FEATURES = []; // No custom GB features — UK handled via numeric ID below
@@ -1113,8 +1104,8 @@ function renderSVGMap(container, topo) {
   allFeatures.forEach(feature => {
     const numId = parseInt(feature.id, 10);
     const iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
-    const teamId = iso ? ISO_TO_TEAM[iso] : null;
-    const isParticipant = !!teamId;
+    const teamIds = iso ? (MULTI_TEAM[iso] || (ISO_TO_TEAM[iso] ? [ISO_TO_TEAM[iso]] : null)) : null;
+    const isParticipant = !!(teamIds && teamIds.length);
 
     const d = pathGen(feature);
     if (!d) return;
@@ -1126,11 +1117,11 @@ function renderSVGMap(container, topo) {
     path.setAttribute('stroke-width', '0.5');
     path.setAttribute('stroke-linejoin', 'round');
 
-    if (isParticipant && teamId) {
+    if (isParticipant && teamIds) {
       path.style.cursor = 'pointer';
       path.addEventListener('mouseenter', e => {
         path.setAttribute('fill', '#2550ff');
-        showMapTooltip(e, teamId);
+        showMapTooltip(e, teamIds);
       });
       path.addEventListener('mousemove', e => {
         positionTooltip(e, document.getElementById('map-tooltip'));
@@ -1154,19 +1145,35 @@ function renderSVGMap(container, topo) {
   container.appendChild(svg);
 }
 
-function showMapTooltip(event, teamId) {
-  const team = getTeam(teamId);
-  if (!team) return;
-  const chosen = state.kitChoices[teamId] || 'local';
+function showMapTooltip(event, teamIds) {
+  // Accept string or array
+  const ids = Array.isArray(teamIds) ? teamIds : [teamIds];
   const tooltip = document.getElementById('map-tooltip');
+  const container = document.getElementById('tt-teams-container');
 
-  document.getElementById('tt-flag').src = `flags/${team.flag}.svg`;
-  document.getElementById('tt-name').textContent = team.name;
-  document.getElementById('tt-group').textContent = `GRP ${team.groupId}`;
-  document.getElementById('tt-img-local').src = team.kit.local;
-  document.getElementById('tt-img-visit').src = team.kit.visitante;
-  document.getElementById('tt-kit-local').classList.toggle('chosen', chosen === 'local');
-  document.getElementById('tt-kit-visit').classList.toggle('chosen', chosen === 'visitante');
+  container.innerHTML = ids.map(teamId => {
+    const team = getTeam(teamId);
+    if (!team) return '';
+    const chosen = state.kitChoices[teamId] || 'local';
+    return `
+      <div class="map-tt-header">
+        <img class="map-tt-flag" src="flags/${team.flag}.svg" alt="">
+        <span class="map-tt-name">${team.name}</span>
+        <span class="map-tt-group">GRP ${team.groupId}</span>
+      </div>
+      <div class="map-tt-kits">
+        <div class="map-tt-kit ${chosen==='local'?'chosen':''}">
+          <img src="${team.kit.local}" alt="Local">
+          <span class="map-tt-kit-label">Local</span>
+        </div>
+        <div class="map-tt-kit ${chosen==='visitante'?'chosen':''}">
+          <img src="${team.kit.visitante}" alt="Visitante">
+          <span class="map-tt-kit-label">Visitante</span>
+        </div>
+      </div>
+      ${ids.length > 1 && teamId !== ids[ids.length-1] ? '<div style="height:1px;background:var(--border);margin:10px 0"></div>' : ''}
+    `;
+  }).join('');
 
   positionTooltip(event, tooltip);
   tooltip.classList.add('visible');
