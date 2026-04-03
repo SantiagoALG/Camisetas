@@ -988,10 +988,9 @@ function galleryCard(team) {
 }
 
 // ════════════════════════════════════════
-// MAPA INTERACTIVO
+// MAPA INTERACTIVO — Canvas + TopoJSON
 // ════════════════════════════════════════
 
-// ISO alpha-2 → team id (using numeric IDs for standard TopoJSON + special GB subdivisions)
 const ISO_TO_TEAM = {
   'MX':'mexico','ZA':'sudafrica','KR':'corea','CZ':'chequia',
   'CA':'canada','CH':'suiza','QA':'qatar','BA':'bosnia',
@@ -1007,7 +1006,6 @@ const ISO_TO_TEAM = {
   'GB-ENG':'inglaterra','GB-SCT':'escocia','HR':'croacia','GH':'ghana','PA':'panama'
 };
 
-// numeric ISO 3166-1 → alpha-2 for TopoJSON countries-110m
 const NUM_TO_ISO = {
   484:'MX',710:'ZA',410:'KR',203:'CZ',124:'CA',756:'CH',634:'QA',70:'BA',
   76:'BR',504:'MA',332:'HT',840:'US',600:'PY',792:'TR',36:'AU',276:'DE',
@@ -1015,78 +1013,52 @@ const NUM_TO_ISO = {
   818:'EG',364:'IR',554:'NZ',724:'ES',132:'CV',682:'SA',858:'UY',250:'FR',
   686:'SN',368:'IQ',578:'NO',32:'AR',12:'DZ',40:'AT',400:'JO',620:'PT',
   180:'CD',860:'UZ',170:'CO',191:'HR',288:'GH',591:'PA'
-  // 826 = UK — excluded, replaced by GB-ENG and GB-SCT custom features
 };
 
-// Simplified GeoJSON features for England and Scotland
-// Coordinates derived from Natural Earth data, simplified for performance
 const GB_FEATURES = [
-  {
-    type:'Feature', id:'GB-ENG',
-    properties:{name:'England'},
-    geometry:{type:'Polygon', coordinates:[[
-      [-5.72,50.06],[-4.15,49.96],[-2.95,50.22],[-1.40,50.73],[-0.06,50.79],
-      [1.02,51.08],[1.75,51.38],[1.70,52.00],[1.35,52.93],[0.47,53.42],
-      [0.10,53.79],[-0.06,54.00],[-0.55,54.45],[-1.00,54.66],[-1.55,55.00],
-      [-2.00,55.00],[-2.50,54.50],[-3.10,54.00],[-2.85,53.50],[-3.10,53.30],
-      [-3.35,53.22],[-3.00,52.50],[-4.20,52.40],[-4.95,51.82],[-5.18,51.55],
-      [-4.60,51.25],[-3.40,50.72],[-5.72,50.06]
-    ]]}
-  },
-  {
-    type:'Feature', id:'GB-SCT',
-    properties:{name:'Scotland'},
-    geometry:{type:'MultiPolygon', coordinates:[
-      // Mainland Scotland
-      [[
-        [-2.00,55.00],[-1.55,55.00],[-1.00,54.66],[-0.55,54.45],[-0.06,54.00],
-        [-0.55,54.45],[-1.00,54.66],[-1.55,55.00],[-2.00,55.00],
-        [-2.50,55.80],[-3.00,55.80],[-3.50,55.95],[-4.00,55.80],
-        [-5.00,55.80],[-5.20,56.50],[-5.80,57.00],[-5.50,57.60],
-        [-4.00,57.70],[-3.50,58.50],[-3.00,58.65],[-2.00,58.50],
-        [-1.75,57.50],[-2.00,57.00],[-1.55,56.00],[-2.00,55.00]
-      ]],
-      // Outer Hebrides (simplified)
-      [[[-7.60,57.60],[-7.00,57.00],[-6.80,57.50],[-7.20,58.00],[-7.60,57.60]]],
-      // Orkney (simplified)
-      [[[-3.30,58.80],[-2.90,58.70],[-2.70,59.00],[-3.20,59.10],[-3.30,58.80]]],
-      // Shetland (simplified)
-      [[[-1.40,59.80],[-0.90,59.50],[-0.80,60.30],[-1.40,60.70],[-1.40,59.80]]]
-    ]}
-  }
+  { type:'Feature', id:'GB-ENG', geometry:{ type:'Polygon', coordinates:[[
+    [-5.72,50.06],[-4.15,49.96],[-2.95,50.22],[-1.40,50.73],[-0.06,50.79],
+    [1.02,51.08],[1.75,51.38],[1.70,52.00],[1.35,52.93],[0.47,53.42],
+    [0.10,53.79],[-0.06,54.00],[-0.55,54.45],[-1.00,54.66],[-1.55,55.00],
+    [-2.00,55.00],[-2.50,54.50],[-3.10,54.00],[-2.85,53.50],[-3.10,53.30],
+    [-3.35,53.22],[-3.00,52.50],[-4.20,52.40],[-4.95,51.82],[-5.18,51.55],
+    [-4.60,51.25],[-3.40,50.72],[-5.72,50.06]
+  ]]}},
+  { type:'Feature', id:'GB-SCT', geometry:{ type:'Polygon', coordinates:[[
+    [-2.00,55.00],[-2.50,55.80],[-3.00,55.80],[-3.50,55.95],[-4.00,55.80],
+    [-5.00,55.80],[-5.20,56.50],[-5.80,57.00],[-5.50,57.60],
+    [-4.00,57.70],[-3.50,58.50],[-3.00,58.65],[-2.00,58.50],
+    [-1.75,57.50],[-2.00,57.00],[-1.55,56.00],[-2.00,55.00]
+  ]]}}
 ];
 
 let mapLoaded = false;
+let mapFeatures = []; // [{feature, teamId, path2d}]
+let mapCanvas, mapCtx, mapW, mapH;
 
 async function initMap() {
   if (mapLoaded) return;
-  mapLoaded = true; // optimistic lock to prevent double-init
+  mapLoaded = true;
 
   const container = document.getElementById('world-svg-container');
 
   try {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js');
+    // Load TopoJSON library
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
 
-    let topo = null;
-    const sources = [
-      'data/countries-110m.json',
-      'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
-      'https://unpkg.com/world-atlas@2/countries-110m.json'
-    ];
-    for (const url of sources) {
-      try {
-        const res = await fetch(url);
-        if (res.ok) { topo = await res.json(); break; }
-      } catch(e) { continue; }
-    }
+    // Fetch data from local file
+    const res = await fetch('data/countries-110m.json');
+    if (!res.ok) throw new Error('data fetch failed');
+    const topo = await res.json();
 
-    if (!topo) throw new Error('All sources failed');
-    renderD3Map(container, topo);
+    renderCanvasMap(container, topo);
   } catch(e) {
-    console.warn('Map load error:', e);
-    mapLoaded = false; // allow retry
-    showMapFallback(container);
+    console.warn('Map error:', e);
+    mapLoaded = false;
+    document.getElementById('map-loading').innerHTML =
+      `<div style="padding:40px;text-align:center;font-family:var(--f-display);color:var(--text-muted);font-size:13px;letter-spacing:1px">
+        Error al cargar el mapa. Asegúrate de que <code>data/countries-110m.json</code> existe en el repo.
+      </div>`;
   }
 }
 
@@ -1100,75 +1072,123 @@ function loadScript(src) {
   });
 }
 
-function renderD3Map(container, topo) {
+// Natural Earth projection (simplified equirectangular works well for world maps)
+function projectNaturalEarth(lon, lat, W, H) {
+  // Simple equirectangular as fallback — clean and reliable
+  const x = (lon + 180) / 360 * W;
+  const y = (90 - lat) / 180 * H;
+  return [x, y];
+}
+
+function renderCanvasMap(container, topo) {
   const loader = document.getElementById('map-loading');
   if (loader) loader.remove();
 
-  const W = container.clientWidth || 1100;
-  const H = Math.round(W * 0.52);
+  mapW = container.clientWidth || 1100;
+  mapH = Math.round(mapW * 0.5);
 
-  const svg = d3.select(container).append('svg')
-    .attr('viewBox', `0 0 ${W} ${H}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet')
-    .style('background', '#e8e4db'); // explicit ocean color, no CSS var
+  // Create canvas
+  const canvas = document.createElement('canvas');
+  canvas.width  = mapW * window.devicePixelRatio;
+  canvas.height = mapH * window.devicePixelRatio;
+  canvas.style.width  = '100%';
+  canvas.style.height = 'auto';
+  canvas.style.display = 'block';
+  canvas.style.cursor = 'default';
+  container.appendChild(canvas);
 
-  const proj = d3.geoNaturalEarth1()
-    .scale(W / 6.4)
-    .translate([W / 2, H / 2]);
+  mapCanvas = canvas;
+  mapCtx = canvas.getContext('2d');
+  mapCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-  const pathGen = d3.geoPath().projection(proj);
-
-  // Build features: standard countries (excluding UK 826) + custom GB features
+  // Build feature list
   const countries = topojson.feature(topo, topo.objects.countries);
   const stdFeatures = countries.features.filter(f => +f.id !== 826);
   const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  // 1. Draw all countries with explicit fill colors (no CSS vars to avoid inheritance issues)
-  svg.selectAll('.country-path')
-    .data(allFeatures)
-    .join('path')
-    .attr('class', 'country-path')
-    .attr('fill', d => {
-      const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      return (iso && ISO_TO_TEAM[iso]) ? '#cdd7ff' : '#d4cfc5';
-    })
-    .attr('stroke', '#f5f2eb')
-    .attr('stroke-width', 0.5)
-    .attr('cursor', d => {
-      const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      return (iso && ISO_TO_TEAM[iso]) ? 'pointer' : 'default';
-    })
-    .attr('d', pathGen)
-    .on('mousemove', function(event, d) {
-      const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      if (!iso || !ISO_TO_TEAM[iso]) return;
-      // Reset all participant countries to light blue
-      svg.selectAll('.country-path').attr('fill', fd => {
-        const fiso = typeof fd.id === 'string' ? fd.id : NUM_TO_ISO[+fd.id];
-        return (fiso && ISO_TO_TEAM[fiso]) ? '#cdd7ff' : '#d4cfc5';
-      });
-      // Highlight hovered country
-      d3.select(this).attr('fill', '#2550ff');
-      showMapTooltip(event, ISO_TO_TEAM[iso]);
-    })
-    .on('mouseleave', function(event, d) {
-      const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      if (!iso || !ISO_TO_TEAM[iso]) return;
-      d3.select(this).attr('fill', '#cdd7ff');
-      hideMapTooltip();
-    });
+  // Pre-compute Path2D for each feature
+  mapFeatures = allFeatures.map(feature => {
+    const iso = typeof feature.id === 'string' ? feature.id : NUM_TO_ISO[+feature.id];
+    const teamId = iso ? ISO_TO_TEAM[iso] : null;
+    const path2d = buildPath2D(feature.geometry);
+    return { feature, teamId, path2d };
+  });
+
+  drawMap(null);
+
+  // Mouse events
+  canvas.addEventListener('mousemove', onMapMouseMove);
+  canvas.addEventListener('mouseleave', () => { drawMap(null); hideMapTooltip(); });
 }
 
-function showMapFallback(container) {
-  document.getElementById('map-loading').innerHTML = `
-    <div style="text-align:center;padding:48px 20px;color:var(--text-muted)">
-      <div style="font-family:var(--f-display);font-size:13px;letter-spacing:2px;margin-bottom:8px">
-        El mapa necesita conexión a internet para cargar los datos geográficos.
-      </div>
-      <div style="font-family:var(--f-body);font-size:12px;color:var(--text-dim)">
-        Funciona correctamente en GitHub Pages o con un servidor local.
-      </div>
-    </div>`;
+function buildPath2D(geometry) {
+  const p = new Path2D();
+  if (!geometry) return p;
+
+  const rings = geometry.type === 'Polygon'
+    ? geometry.coordinates
+    : geometry.type === 'MultiPolygon'
+      ? geometry.coordinates.flat()
+      : [];
+
+  rings.forEach(ring => {
+    ring.forEach(([lon, lat], i) => {
+      const [x, y] = projectNaturalEarth(lon, lat, mapW, mapH);
+      i === 0 ? p.moveTo(x, y) : p.lineTo(x, y);
+    });
+    p.closePath();
+  });
+
+  return p;
+}
+
+function drawMap(hoveredTeamId) {
+  mapCtx.clearRect(0, 0, mapW, mapH);
+
+  // Ocean background
+  mapCtx.fillStyle = '#dde3f0';
+  mapCtx.fillRect(0, 0, mapW, mapH);
+
+  // Draw each country
+  mapFeatures.forEach(({ teamId, path2d }) => {
+    const isParticipant = !!teamId;
+    const isHovered = teamId && teamId === hoveredTeamId;
+
+    mapCtx.beginPath();
+    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c8c3b8';
+    mapCtx.fill(path2d);
+
+    mapCtx.strokeStyle = '#f5f2eb';
+    mapCtx.lineWidth = 0.4;
+    mapCtx.stroke(path2d);
+  });
+}
+
+function onMapMouseMove(event) {
+  const rect = mapCanvas.getBoundingClientRect();
+  const scaleX = mapW / rect.width;
+  const mx = (event.clientX - rect.left) * scaleX;
+  const my = (event.clientY - rect.top) * scaleX;
+
+  let found = null;
+  // Check in reverse order (last drawn = on top)
+  for (let i = mapFeatures.length - 1; i >= 0; i--) {
+    const { teamId, path2d } = mapFeatures[i];
+    if (teamId && mapCtx.isPointInPath(path2d, mx, my)) {
+      found = teamId;
+      break;
+    }
+  }
+
+  if (found) {
+    mapCanvas.style.cursor = 'pointer';
+    drawMap(found);
+    showMapTooltip(event, found);
+  } else {
+    mapCanvas.style.cursor = 'default';
+    drawMap(null);
+    hideMapTooltip();
+  }
 }
 
 function showMapTooltip(event, teamId) {
