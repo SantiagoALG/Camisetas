@@ -264,12 +264,9 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 
 /* ─── MAPA ─── */
 .map-view-inner{padding:32px 40px 80px;max-width:1400px;margin:0 auto}
-#world-svg-container{width:100%;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+#world-svg-container{width:100%;position:relative;background:#e8e4db;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
 #world-svg-container svg{width:100%;height:auto;display:block}
-.country-path{fill:var(--surface3);stroke:var(--bg);stroke-width:0.5px;transition:fill 200ms ease;cursor:default}
-.country-path.participant{fill:#cdd7ff;cursor:pointer}
-.country-path.participant:hover{fill:#7a93ff}
-.country-path.participant.active{fill:var(--blue)}
+.country-path{transition:fill 150ms ease}
 .map-tooltip{position:fixed;pointer-events:none;z-index:500;opacity:0;transition:opacity 180ms ease;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;min-width:220px;max-width:260px;box-shadow:0 16px 48px rgba(0,0,0,0.15)}
 .map-tooltip.visible{opacity:1}
 .map-tt-header{display:flex;align-items:center;gap:8px;margin-bottom:12px}
@@ -1073,9 +1070,9 @@ async function initMap() {
 
     let topo = null;
     const sources = [
+      'data/countries-110m.json',
       'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',
-      'https://unpkg.com/world-atlas@2/countries-110m.json',
-      'https://raw.githubusercontent.com/topojson/world-atlas/master/countries-110m.json'
+      'https://unpkg.com/world-atlas@2/countries-110m.json'
     ];
     for (const url of sources) {
       try {
@@ -1112,7 +1109,8 @@ function renderD3Map(container, topo) {
 
   const svg = d3.select(container).append('svg')
     .attr('viewBox', `0 0 ${W} ${H}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet');
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .style('background', '#e8e4db'); // explicit ocean color, no CSS var
 
   const proj = d3.geoNaturalEarth1()
     .scale(W / 6.4)
@@ -1120,58 +1118,45 @@ function renderD3Map(container, topo) {
 
   const pathGen = d3.geoPath().projection(proj);
 
-  // 1. Ocean background (sphere) — FIRST layer
-  svg.append('path')
-    .datum({type:'Sphere'})
-    .attr('fill','var(--surface2)')
-    .attr('stroke','var(--border)')
-    .attr('stroke-width', 0.5)
-    .attr('d', pathGen);
-
-  // 2. Graticule (grid lines) — second layer
-  svg.append('path')
-    .datum(d3.geoGraticule()())
-    .attr('fill','none')
-    .attr('stroke','var(--border)')
-    .attr('stroke-width', 0.25)
-    .attr('d', pathGen);
-
-  // 3. Build features: standard countries (excluding UK 826) + custom GB features
+  // Build features: standard countries (excluding UK 826) + custom GB features
   const countries = topojson.feature(topo, topo.objects.countries);
   const stdFeatures = countries.features.filter(f => +f.id !== 826);
   const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  // 4. Draw all countries — THIRD layer
+  // 1. Draw all countries with explicit fill colors (no CSS vars to avoid inheritance issues)
   svg.selectAll('.country-path')
     .data(allFeatures)
     .join('path')
-    .attr('class', d => {
+    .attr('class', 'country-path')
+    .attr('fill', d => {
       const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      return 'country-path' + (iso && ISO_TO_TEAM[iso] ? ' participant' : '');
+      return (iso && ISO_TO_TEAM[iso]) ? '#cdd7ff' : '#d4cfc5';
+    })
+    .attr('stroke', '#f5f2eb')
+    .attr('stroke-width', 0.5)
+    .attr('cursor', d => {
+      const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
+      return (iso && ISO_TO_TEAM[iso]) ? 'pointer' : 'default';
     })
     .attr('d', pathGen)
     .on('mousemove', function(event, d) {
       const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
       if (!iso || !ISO_TO_TEAM[iso]) return;
+      // Reset all participant countries to light blue
+      svg.selectAll('.country-path').attr('fill', fd => {
+        const fiso = typeof fd.id === 'string' ? fd.id : NUM_TO_ISO[+fd.id];
+        return (fiso && ISO_TO_TEAM[fiso]) ? '#cdd7ff' : '#d4cfc5';
+      });
+      // Highlight hovered country
+      d3.select(this).attr('fill', '#2550ff');
       showMapTooltip(event, ISO_TO_TEAM[iso]);
-      d3.selectAll('.country-path').classed('active', false);
-      d3.select(this).classed('active', true);
     })
     .on('mouseleave', function(event, d) {
       const iso = typeof d.id === 'string' ? d.id : NUM_TO_ISO[+d.id];
-      if (iso && ISO_TO_TEAM[iso]) {
-        hideMapTooltip();
-        d3.select(this).classed('active', false);
-      }
+      if (!iso || !ISO_TO_TEAM[iso]) return;
+      d3.select(this).attr('fill', '#cdd7ff');
+      hideMapTooltip();
     });
-
-  // 5. Country borders on top — FOURTH layer
-  svg.append('path')
-    .datum(topojson.mesh(topo, topo.objects.countries, (a, b) => a !== b))
-    .attr('fill', 'none')
-    .attr('stroke', 'var(--bg)')
-    .attr('stroke-width', 0.4)
-    .attr('d', pathGen);
 }
 
 function showMapFallback(container) {
