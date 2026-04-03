@@ -1033,9 +1033,6 @@ const GB_FEATURES = [
 ];
 
 let mapLoaded = false;
-let mapFeatures = [];
-let mapCanvas, mapCtx, mapW, mapH;
-let mapProjection; // D3 projection
 
 async function initMap() {
   if (mapLoaded) return;
@@ -1048,23 +1045,22 @@ async function initMap() {
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
 
     const res = await fetch('data/countries-110m.json');
-    if (!res.ok) throw new Error('data fetch failed');
+    if (!res.ok) throw new Error('fetch failed');
     const topo = await res.json();
 
-    renderCanvasMap(container, topo);
+    renderSVGMap(container, topo);
   } catch(e) {
     console.warn('Map error:', e);
     mapLoaded = false;
-    document.getElementById('map-loading').innerHTML =
-      `<div style="padding:40px;text-align:center;font-family:var(--f-display);color:var(--text-muted);font-size:13px;letter-spacing:1px">
-        Error al cargar el mapa. Asegúrate de que <code>data/countries-110m.json</code> existe en el repo.
-      </div>`;
+    const loader = document.getElementById('map-loading');
+    if (loader) loader.innerHTML =
+      '<div style="padding:40px;text-align:center;font-family:var(--f-display);color:var(--text-muted);font-size:13px">Error cargando el mapa. Verifica que data/countries-110m.json existe.</div>';
   }
 }
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+    if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
     const s = document.createElement('script');
     s.src = src; s.crossOrigin = 'anonymous';
     s.onload = resolve; s.onerror = reject;
@@ -1072,162 +1068,107 @@ function loadScript(src) {
   });
 }
 
-function renderCanvasMap(container, topo) {
+function renderSVGMap(container, topo) {
   const loader = document.getElementById('map-loading');
   if (loader) loader.remove();
 
-  mapW = container.clientWidth || 1100;
-  mapH = Math.round(mapW * 0.56);
+  const W = container.clientWidth || 1100;
+  const H = Math.round(W * 0.54);
 
-  const dpr = window.devicePixelRatio || 1;
-  const canvas = document.createElement('canvas');
-  canvas.width  = mapW * dpr;
-  canvas.height = mapH * dpr;
-  canvas.style.width  = '100%';
-  canvas.style.height = 'auto';
-  canvas.style.display = 'block';
-  canvas.style.cursor = 'default';
-  container.appendChild(canvas);
+  const proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
+  const pathGen = d3.geoPath().projection(proj);
 
-  mapCanvas = canvas;
-  mapCtx = canvas.getContext('2d');
-  mapCtx.scale(dpr, dpr);
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', 'auto');
+  svg.style.display = 'block';
 
-  // Natural Earth projection via D3
-  mapProjection = d3.geoNaturalEarth1()
-    .scale(mapW / 6.28)
-    .translate([mapW / 2, mapH / 2]);
+  // Defs: clipPath using the Natural Earth sphere path
+  const sphereD = pathGen({type:'Sphere'});
+  const defs = document.createElementNS(svgNS, 'defs');
+  const clipPath = document.createElementNS(svgNS, 'clipPath');
+  clipPath.setAttribute('id', 'map-clip');
+  const clipShape = document.createElementNS(svgNS, 'path');
+  clipShape.setAttribute('d', sphereD);
+  clipPath.appendChild(clipShape);
+  defs.appendChild(clipPath);
+  svg.appendChild(defs);
 
-  const pathGen = d3.geoPath().projection(mapProjection).context(mapCtx);
+  // Background outside oval
+  const bg = document.createElementNS(svgNS, 'rect');
+  bg.setAttribute('width', W); bg.setAttribute('height', H);
+  bg.setAttribute('fill', '#f5f2eb');
+  svg.appendChild(bg);
 
-  // Build features excluding UK (826), add custom GB
+  // Ocean (sphere shape)
+  const ocean = document.createElementNS(svgNS, 'path');
+  ocean.setAttribute('d', sphereD);
+  ocean.setAttribute('fill', '#d6e0f5');
+  svg.appendChild(ocean);
+
+  // Countries group — clipped to sphere
+  const g = document.createElementNS(svgNS, 'g');
+  g.setAttribute('clip-path', 'url(#map-clip)');
+  svg.appendChild(g);
+
+  // Build features
   const countries = topojson.feature(topo, topo.objects.countries);
-  const stdFeatures = countries.features.filter(f => parseInt(f.id, 10) !== 826);
+  const stdFeatures = countries.features.filter(f =>
+    parseInt(f.id, 10) !== 826 &&
+    f.geometry &&
+    (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
+  );
   const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  // Pre-compute: store feature + teamId + use D3 pathGen for hit testing
-  mapFeatures = allFeatures
-    .filter(f => f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'))
-    .map(feature => {
-      let iso;
-      if (typeof feature.id === 'string' && feature.id.includes('-')) {
-        iso = feature.id;
-      } else {
-        const numId = parseInt(feature.id, 10);
-        iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
-      }
-      const teamId = iso ? ISO_TO_TEAM[iso] : null;
-      return { feature, teamId };
-    });
-
-  // Draw oval clip (Natural Earth boundary)
-  drawMap(null, pathGen);
-
-  canvas.addEventListener('mousemove', e => onMapMouseMove(e, pathGen));
-  canvas.addEventListener('mouseleave', () => { drawMap(null, pathGen); hideMapTooltip(); });
-}
-
-function drawMap(hoveredTeamId, pathGen) {
-  mapCtx.clearRect(0, 0, mapW, mapH);
-
-  // 1. Ocean oval (sphere) — background
-  mapCtx.beginPath();
-  pathGen({ type: 'Sphere' });
-  mapCtx.fillStyle = '#d6e0f5';
-  mapCtx.fill();
-
-  // 2. Countries ON TOP of ocean
-  mapFeatures.forEach(({ feature, teamId }) => {
-    const isParticipant = !!teamId;
-    const isHovered = teamId === hoveredTeamId;
-
-    mapCtx.beginPath();
-    pathGen(feature);
-    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c4bfb4';
-    mapCtx.fill();
-    mapCtx.strokeStyle = '#f5f2eb';
-    mapCtx.lineWidth = 0.4;
-    mapCtx.stroke();
-  });
-
-  // 3. Sphere border on top of everything
-  mapCtx.beginPath();
-  pathGen({ type: 'Sphere' });
-  mapCtx.strokeStyle = '#b8c8e8';
-  mapCtx.lineWidth = 1;
-  mapCtx.stroke();
-}
-
-function drawMap(hoveredTeamId, pathGen) {
-  mapCtx.clearRect(0, 0, mapW, mapH);
-
-  // 1. Background fill (canvas background, outside the oval)
-  mapCtx.fillStyle = '#f5f2eb';
-  mapCtx.fillRect(0, 0, mapW, mapH);
-
-  // 2. Ocean oval — clip to this shape
-  mapCtx.save();
-  mapCtx.beginPath();
-  pathGen({ type: 'Sphere' });
-  mapCtx.fillStyle = '#d6e0f5';
-  mapCtx.fill();
-  mapCtx.clip(); // clip everything inside the oval
-
-  // 3. Countries inside the clip
-  mapFeatures.forEach(({ feature, teamId }) => {
-    const isParticipant = !!teamId;
-    const isHovered = teamId === hoveredTeamId;
-    mapCtx.beginPath();
-    pathGen(feature);
-    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c4bfb4';
-    mapCtx.fill();
-    mapCtx.strokeStyle = 'rgba(245,242,235,0.8)';
-    mapCtx.lineWidth = 0.5;
-    mapCtx.stroke();
-  });
-
-  mapCtx.restore();
-
-  // 4. Sphere border on top
-  mapCtx.beginPath();
-  pathGen({ type: 'Sphere' });
-  mapCtx.strokeStyle = '#a0b4d8';
-  mapCtx.lineWidth = 1.5;
-  mapCtx.stroke();
-}
-
-function onMapMouseMove(event, pathGen) {
-  const rect = mapCanvas.getBoundingClientRect();
-  const scaleX = mapW / rect.width;
-  const mx = (event.clientX - rect.left) * scaleX;
-  const my = (event.clientY - rect.top) * scaleX;
-
-  // Invert projection to get geographic coordinates
-  const coords = mapProjection.invert([mx, my]);
-  if (!coords) { drawMap(null, pathGen); hideMapTooltip(); return; }
-
-  let found = null;
-  // Check standard countries FIRST (more precise), GB custom features last
-  const stdFeatures = mapFeatures.filter(f => !f.feature.id?.toString().includes('-'));
-  const gbFeatures  = mapFeatures.filter(f =>  f.feature.id?.toString().includes('-'));
-
-  for (const { feature, teamId } of [...stdFeatures, ...gbFeatures]) {
-    if (!teamId) continue;
-    if (d3.geoContains(feature, coords)) {
-      found = teamId;
-      break;
+  allFeatures.forEach(feature => {
+    let iso;
+    if (typeof feature.id === 'string' && feature.id.includes('-')) {
+      iso = feature.id;
+    } else {
+      const numId = parseInt(feature.id, 10);
+      iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
     }
-  }
+    const teamId = iso ? ISO_TO_TEAM[iso] : null;
+    const isParticipant = !!teamId;
 
-  if (found) {
-    mapCanvas.style.cursor = 'pointer';
-    drawMap(found, pathGen);
-    showMapTooltip(event, found);
-  } else {
-    mapCanvas.style.cursor = 'default';
-    drawMap(null, pathGen);
-    hideMapTooltip();
-  }
+    const d = pathGen(feature);
+    if (!d) return;
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', isParticipant ? '#9eb3ff' : '#c4bfb4');
+    path.setAttribute('stroke', '#f5f2eb');
+    path.setAttribute('stroke-width', '0.5');
+    path.setAttribute('stroke-linejoin', 'round');
+
+    if (isParticipant && teamId) {
+      path.style.cursor = 'pointer';
+      path.addEventListener('mouseenter', e => {
+        path.setAttribute('fill', '#2550ff');
+        showMapTooltip(e, teamId);
+      });
+      path.addEventListener('mousemove', e => {
+        positionTooltip(e, document.getElementById('map-tooltip'));
+      });
+      path.addEventListener('mouseleave', () => {
+        path.setAttribute('fill', '#9eb3ff');
+        hideMapTooltip();
+      });
+    }
+    g.appendChild(path);
+  });
+
+  // Sphere border on top
+  const border = document.createElementNS(svgNS, 'path');
+  border.setAttribute('d', sphereD);
+  border.setAttribute('fill', 'none');
+  border.setAttribute('stroke', '#a0b4d8');
+  border.setAttribute('stroke-width', '1');
+  svg.appendChild(border);
+
+  container.appendChild(svg);
 }
 
 function showMapTooltip(event, teamId) {
