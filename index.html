@@ -164,6 +164,32 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 .kit-upload-small{position:absolute;bottom:34px;right:4px;background:rgba(0,0,0,0.75);border:1px solid var(--border-bright);color:var(--text-muted);font-size:10px;padding:3px 6px;border-radius:3px;cursor:pointer;z-index:2;transition:var(--transition);white-space:nowrap;font-family:'DM Mono',monospace;letter-spacing:0.5px}
 .kit-upload-small:hover{color:var(--text);border-color:var(--accent)}
 .kit-upload-small input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+/* ─── GALERÍA ─── */
+.gallery-controls{display:flex;align-items:center;gap:12px;margin-bottom:32px;flex-wrap:wrap}
+.gallery-search{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:10px 16px;border-radius:var(--radius);outline:none;transition:var(--transition)}
+.gallery-search:focus{border-color:var(--accent)}
+.gallery-search::placeholder{color:var(--text-dim)}
+.gallery-filters{display:flex;gap:6px;flex-wrap:wrap}
+.gf-btn{background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:7px 14px;border-radius:var(--radius);cursor:pointer;transition:var(--transition);white-space:nowrap}
+.gf-btn:hover{color:var(--text);border-color:var(--border-bright)}
+.gf-btn.active{color:var(--accent);border-color:var(--accent-dim);background:var(--accent-glow)}
+.gallery-results{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-left:auto;white-space:nowrap}
+.gallery-section{margin-bottom:48px}
+.gallery-section-title{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:4px;color:var(--text-muted);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.gallery-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.gallery-conf-badge{font-size:10px;padding:2px 8px;border-radius:2px;letter-spacing:1px;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border)}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.gallery-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;transition:var(--transition);position:relative}
+.gallery-card:hover{border-color:var(--border-bright);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.gallery-card-kits{display:grid;grid-template-columns:1fr 1fr;height:140px;background:var(--surface2)}
+.gallery-kit-half{display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.gallery-kit-half:first-child{border-right:1px solid var(--border)}
+.gallery-kit-half img{width:80%;height:80%;object-fit:contain}
+.gallery-kit-label{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-family:'DM Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--text-dim);text-transform:uppercase}
+.gallery-card-info{padding:10px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid var(--border)}
+.gallery-card-name{font-size:12px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gallery-card-group{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--text-dim)}
+.gallery-empty{text-align:center;padding:80px 20px;color:var(--text-dim);font-family:'DM Mono',monospace;font-size:13px}
 </style>
 </head>
 <body>
@@ -175,6 +201,7 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
     <button class="nav-btn" id="nav-grupos" onclick="goTo('grupos')" disabled>02 Grupos</button>
     <button class="nav-btn" id="nav-terceros" onclick="goTo('terceros')" disabled>03 Terceros</button>
     <button class="nav-btn" id="nav-bracket" onclick="goTo('bracket')" disabled>04 Bracket</button>
+    <button class="nav-btn" id="nav-galeria" onclick="goTo('galeria')">05 Galería</button>
   </nav>
 </header>
 
@@ -243,6 +270,23 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
     <div class="page-title">BRACKET ELIMINATORIO</div>
     <div class="page-subtitle">Haz clic en la camiseta ganadora para avanzarla a la siguiente ronda.</div>
     <div class="bracket-wrapper"><div class="bracket" id="bracket-container"></div></div>
+  </div>
+</div>
+
+<div class="view" id="view-galeria">
+  <div class="container">
+    <div class="page-title">GALERÍA DE CAMISETAS</div>
+    <div class="page-subtitle">Las 48 selecciones del Mundial FIFA 2026. Doble clic para ampliar.</div>
+    <div class="gallery-controls">
+      <input class="gallery-search" id="gallery-search" type="text" placeholder="Buscar selección..." oninput="renderGallery()">
+      <div class="gallery-filters">
+        <button class="gf-btn active" data-filter="alfa" onclick="setGalleryFilter('alfa',this)">A–Z</button>
+        <button class="gf-btn" data-filter="grupos" onclick="setGalleryFilter('grupos',this)">Grupos</button>
+        <button class="gf-btn" data-filter="conf" onclick="setGalleryFilter('conf',this)">Confederaciones</button>
+      </div>
+      <span class="gallery-results" id="gallery-results"></span>
+    </div>
+    <div id="gallery-container"></div>
   </div>
 </div>
 
@@ -345,6 +389,7 @@ function goTo(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('nav-'+view).classList.add('active');
   if (view === 'terceros') renderTercerosView();
+  if (view === 'galeria') renderGallery();
 }
 function enableNav(id) { const b = document.getElementById('nav-'+id); if(b) b.disabled=false; }
 function getTeam(id) { return state.teams.find(t => t.id===id); }
@@ -689,6 +734,127 @@ function closeKitModal(e) {
   document.getElementById('kit-modal-overlay').classList.remove('open');
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.getElementById('kit-modal-overlay').classList.remove('open'); });
+
+// ════════════════════════════════════════
+// GALERÍA
+// ════════════════════════════════════════
+const CONFEDERATIONS = {
+  CONCACAF: ['mexico','usa','canada','honduras','curacao','panama','costarica','haiti'],
+  CONMEBOL: ['brasil','argentina','colombia','ecuador','uruguay','paraguay','chile','peru','venezuela','bolivia'],
+  UEFA:     ['espana','francia','alemania','inglaterra','portugal','holanda','belgica','italia','suiza','croacia','austria','escocia','turquia','serbia','chequia','rumania','noruega','suecia','bosnia'],
+  CAF:      ['marruecos','senegal','sudafrica','nigeria','ghana','camerun','egipto','mali','argelia','tunez','costademarfil','drcongo','caboverde'],
+  AFC:      ['japon','corea','iran','arabia','qatar','uzbekistan','irak','jordania','australia','indonesia'],
+  OFC:      ['nzealanda']
+};
+
+// Map each team id to its confederation
+function getConf(teamId) {
+  for (const [conf, ids] of Object.entries(CONFEDERATIONS)) {
+    if (ids.includes(teamId)) return conf;
+  }
+  return 'UEFA'; // fallback for playoff slots
+}
+
+let galleryFilter = 'alfa';
+
+function setGalleryFilter(filter, btn) {
+  galleryFilter = filter;
+  document.querySelectorAll('.gf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGallery();
+}
+
+function renderGallery() {
+  const query = (document.getElementById('gallery-search')?.value || '').toLowerCase().trim();
+  const container = document.getElementById('gallery-container');
+  if (!container) return;
+
+  // Filter teams by search
+  let teams = state.teams.filter(t => !query || t.name.toLowerCase().includes(query));
+  document.getElementById('gallery-results').textContent = `${teams.length} selecciones`;
+
+  if (teams.length === 0) {
+    container.innerHTML = `<div class="gallery-empty">No se encontraron resultados para "${query}"</div>`;
+    return;
+  }
+
+  let html = '';
+
+  if (galleryFilter === 'alfa') {
+    // Sort alphabetically, group by first letter
+    const sorted = [...teams].sort((a,b) => a.name.localeCompare(b.name, 'es'));
+    const byLetter = {};
+    sorted.forEach(t => {
+      const letter = t.name[0].toUpperCase();
+      if (!byLetter[letter]) byLetter[letter] = [];
+      byLetter[letter].push(t);
+    });
+    Object.entries(byLetter).forEach(([letter, ts]) => {
+      html += `<div class="gallery-section">
+        <div class="gallery-section-title">${letter}</div>
+        <div class="gallery-grid">${ts.map(t => galleryCard(t)).join('')}</div>
+      </div>`;
+    });
+
+  } else if (galleryFilter === 'grupos') {
+    state.groups.forEach(g => {
+      const groupTeams = g.teams.filter(t => teams.find(ft => ft.id === t.id));
+      if (!groupTeams.length) return;
+      html += `<div class="gallery-section">
+        <div class="gallery-section-title">GRUPO ${g.id}</div>
+        <div class="gallery-grid">${groupTeams.map(t => galleryCard(t)).join('')}</div>
+      </div>`;
+    });
+
+  } else if (galleryFilter === 'conf') {
+    const confColors = {
+      CONCACAF:'#60d0ff', CONMEBOL:'#c8f230', UEFA:'#a78bfa',
+      CAF:'#ffd166', AFC:'#ff6b6b', OFC:'#86efac'
+    };
+    const confNames = {
+      CONCACAF:'Norteamérica, Centroamérica y el Caribe',
+      CONMEBOL:'Sudamérica', UEFA:'Europa',
+      CAF:'África', AFC:'Asia y Oceanía*', OFC:'Oceanía'
+    };
+    Object.entries(confColors).forEach(([conf, color]) => {
+      const confTeams = teams.filter(t => getConf(t.id) === conf);
+      if (!confTeams.length) return;
+      const sorted = [...confTeams].sort((a,b) => a.name.localeCompare(b.name,'es'));
+      html += `<div class="gallery-section">
+        <div class="gallery-section-title">
+          ${conf}
+          <span class="gallery-conf-badge" style="color:${color};border-color:${color}33">${confNames[conf]}</span>
+        </div>
+        <div class="gallery-grid">${sorted.map(t => galleryCard(t)).join('')}</div>
+      </div>`;
+    });
+  }
+
+  container.innerHTML = html;
+}
+
+function galleryCard(team) {
+  const localSrc = team.kit.local;
+  const visitSrc = team.kit.visitante;
+  const groupId = team.groupId || '';
+  return `<div class="gallery-card">
+    <div class="gallery-card-kits">
+      <div class="gallery-kit-half" onclick="openKitModal('${team.id}','local')" title="Ver local">
+        <img src="${localSrc}" alt="Local" onerror="this.style.opacity='0.1'">
+        <span class="gallery-kit-label">Local</span>
+      </div>
+      <div class="gallery-kit-half" onclick="openKitModal('${team.id}','visitante')" title="Ver visitante">
+        <img src="${visitSrc}" alt="Visitante" onerror="this.style.opacity='0.1'">
+        <span class="gallery-kit-label">Visit.</span>
+      </div>
+    </div>
+    <div class="gallery-card-info">
+      ${flagImg(team.flag,'16px')}
+      <span class="gallery-card-name">${team.name}</span>
+      <span class="gallery-card-group">G-${groupId}</span>
+    </div>
+  </div>`;
+}
 
 init();
 </script>
