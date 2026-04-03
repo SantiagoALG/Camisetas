@@ -1072,9 +1072,9 @@ function loadScript(src) {
   });
 }
 
-// Natural Earth projection (simplified equirectangular works well for world maps)
-function projectNaturalEarth(lon, lat, W, H) {
-  // Simple equirectangular as fallback — clean and reliable
+// Natural Earth projection — matches the visual style of world atlases
+function projectCoord(lon, lat, W, H) {
+  // Equirectangular with vertical padding correction
   const x = (lon + 180) / 360 * W;
   const y = (90 - lat) / 180 * H;
   return [x, y];
@@ -1087,10 +1087,9 @@ function renderCanvasMap(container, topo) {
   mapW = container.clientWidth || 1100;
   mapH = Math.round(mapW * 0.5);
 
-  // Create canvas
   const canvas = document.createElement('canvas');
-  canvas.width  = mapW * window.devicePixelRatio;
-  canvas.height = mapH * window.devicePixelRatio;
+  canvas.width  = mapW * (window.devicePixelRatio || 1);
+  canvas.height = mapH * (window.devicePixelRatio || 1);
   canvas.style.width  = '100%';
   canvas.style.height = 'auto';
   canvas.style.display = 'block';
@@ -1099,16 +1098,25 @@ function renderCanvasMap(container, topo) {
 
   mapCanvas = canvas;
   mapCtx = canvas.getContext('2d');
-  mapCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  mapCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
 
-  // Build feature list
+  // Build feature list — key fix: parse ID as number AND as string
   const countries = topojson.feature(topo, topo.objects.countries);
-  const stdFeatures = countries.features.filter(f => +f.id !== 826);
+  const stdFeatures = countries.features.filter(f => {
+    const numId = parseInt(f.id, 10);
+    return numId !== 826; // exclude UK
+  });
   const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  // Pre-compute Path2D for each feature
   mapFeatures = allFeatures.map(feature => {
-    const iso = typeof feature.id === 'string' ? feature.id : NUM_TO_ISO[+feature.id];
+    // Handle both numeric string IDs ("484") and plain string IDs ("GB-ENG")
+    let iso;
+    if (typeof feature.id === 'string' && feature.id.includes('-')) {
+      iso = feature.id; // GB-ENG, GB-SCT
+    } else {
+      const numId = parseInt(feature.id, 10);
+      iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
+    }
     const teamId = iso ? ISO_TO_TEAM[iso] : null;
     const path2d = buildPath2D(feature.geometry);
     return { feature, teamId, path2d };
@@ -1116,7 +1124,6 @@ function renderCanvasMap(container, topo) {
 
   drawMap(null);
 
-  // Mouse events
   canvas.addEventListener('mousemove', onMapMouseMove);
   canvas.addEventListener('mouseleave', () => { drawMap(null); hideMapTooltip(); });
 }
@@ -1133,7 +1140,7 @@ function buildPath2D(geometry) {
 
   rings.forEach(ring => {
     ring.forEach(([lon, lat], i) => {
-      const [x, y] = projectNaturalEarth(lon, lat, mapW, mapH);
+      const [x, y] = projectCoord(lon, lat, mapW, mapH);
       i === 0 ? p.moveTo(x, y) : p.lineTo(x, y);
     });
     p.closePath();
