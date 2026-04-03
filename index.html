@@ -1075,7 +1075,8 @@ function renderSVGMap(container, topo) {
   const W = container.clientWidth || 1100;
   const H = Math.round(W * 0.54);
 
-  const proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
+  // Robinson projection (National Geographic style)
+  const proj = d3.geoRobinson().scale(W / 6.3).translate([W / 2, H / 2]);
   const pathGen = d3.geoPath().projection(proj);
 
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -1085,30 +1086,36 @@ function renderSVGMap(container, topo) {
   svg.setAttribute('height', 'auto');
   svg.style.display = 'block';
 
-  // Defs: clipPath using the Natural Earth sphere path
-  const sphereD = pathGen({type:'Sphere'});
+  // Use a projected graticule bounding box to find the actual oval dimensions
+  // Robinson maps to a specific aspect ratio — approximate with ellipse
+  const cx = W / 2, cy = H / 2;
+  const rx = W * 0.487, ry = H * 0.468;
+
+  // Defs: clip ellipse
   const defs = document.createElementNS(svgNS, 'defs');
   const clipPath = document.createElementNS(svgNS, 'clipPath');
   clipPath.setAttribute('id', 'map-clip');
-  const clipShape = document.createElementNS(svgNS, 'path');
-  clipShape.setAttribute('d', sphereD);
-  clipPath.appendChild(clipShape);
+  const clipEl = document.createElementNS(svgNS, 'ellipse');
+  clipEl.setAttribute('cx', cx); clipEl.setAttribute('cy', cy);
+  clipEl.setAttribute('rx', rx); clipEl.setAttribute('ry', ry);
+  clipPath.appendChild(clipEl);
   defs.appendChild(clipPath);
   svg.appendChild(defs);
 
-  // Background outside oval
+  // Page background
   const bg = document.createElementNS(svgNS, 'rect');
   bg.setAttribute('width', W); bg.setAttribute('height', H);
   bg.setAttribute('fill', '#f5f2eb');
   svg.appendChild(bg);
 
-  // Ocean (sphere shape)
-  const ocean = document.createElementNS(svgNS, 'path');
-  ocean.setAttribute('d', sphereD);
+  // Ocean ellipse
+  const ocean = document.createElementNS(svgNS, 'ellipse');
+  ocean.setAttribute('cx', cx); ocean.setAttribute('cy', cy);
+  ocean.setAttribute('rx', rx); ocean.setAttribute('ry', ry);
   ocean.setAttribute('fill', '#d6e0f5');
   svg.appendChild(ocean);
 
-  // Countries group — clipped to sphere
+  // Countries group — clipped to ellipse
   const g = document.createElementNS(svgNS, 'g');
   g.setAttribute('clip-path', 'url(#map-clip)');
   svg.appendChild(g);
@@ -1160,12 +1167,13 @@ function renderSVGMap(container, topo) {
     g.appendChild(path);
   });
 
-  // Sphere border on top
-  const border = document.createElementNS(svgNS, 'path');
-  border.setAttribute('d', sphereD);
+  // Ellipse border on top
+  const border = document.createElementNS(svgNS, 'ellipse');
+  border.setAttribute('cx', cx); border.setAttribute('cy', cy);
+  border.setAttribute('rx', rx); border.setAttribute('ry', ry);
   border.setAttribute('fill', 'none');
   border.setAttribute('stroke', '#a0b4d8');
-  border.setAttribute('stroke-width', '1');
+  border.setAttribute('stroke-width', '1.5');
   svg.appendChild(border);
 
   container.appendChild(svg);
