@@ -1033,8 +1033,9 @@ const GB_FEATURES = [
 ];
 
 let mapLoaded = false;
-let mapFeatures = []; // [{feature, teamId, path2d}]
+let mapFeatures = [];
 let mapCanvas, mapCtx, mapW, mapH;
+let mapProjection; // D3 projection
 
 async function initMap() {
   if (mapLoaded) return;
@@ -1043,10 +1044,9 @@ async function initMap() {
   const container = document.getElementById('world-svg-container');
 
   try {
-    // Load TopoJSON library
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js');
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js');
 
-    // Fetch data from local file
     const res = await fetch('data/countries-110m.json');
     if (!res.ok) throw new Error('data fetch failed');
     const topo = await res.json();
@@ -1072,24 +1072,17 @@ function loadScript(src) {
   });
 }
 
-// Natural Earth projection — matches the visual style of world atlases
-function projectCoord(lon, lat, W, H) {
-  // Equirectangular with vertical padding correction
-  const x = (lon + 180) / 360 * W;
-  const y = (90 - lat) / 180 * H;
-  return [x, y];
-}
-
 function renderCanvasMap(container, topo) {
   const loader = document.getElementById('map-loading');
   if (loader) loader.remove();
 
   mapW = container.clientWidth || 1100;
-  mapH = Math.round(mapW * 0.5);
+  mapH = Math.round(mapW * 0.56);
 
+  const dpr = window.devicePixelRatio || 1;
   const canvas = document.createElement('canvas');
-  canvas.width  = mapW * (window.devicePixelRatio || 1);
-  canvas.height = mapH * (window.devicePixelRatio || 1);
+  canvas.width  = mapW * dpr;
+  canvas.height = mapH * dpr;
   canvas.style.width  = '100%';
   canvas.style.height = 'auto';
   canvas.style.display = 'block';
@@ -1098,91 +1091,93 @@ function renderCanvasMap(container, topo) {
 
   mapCanvas = canvas;
   mapCtx = canvas.getContext('2d');
-  mapCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  mapCtx.scale(dpr, dpr);
 
-  // Build feature list — key fix: parse ID as number AND as string
+  // Natural Earth projection via D3
+  mapProjection = d3.geoNaturalEarth1()
+    .scale(mapW / 6.28)
+    .translate([mapW / 2, mapH / 2]);
+
+  const pathGen = d3.geoPath().projection(mapProjection).context(mapCtx);
+
+  // Build features excluding UK (826), add custom GB
   const countries = topojson.feature(topo, topo.objects.countries);
-  const stdFeatures = countries.features.filter(f => {
-    const numId = parseInt(f.id, 10);
-    return numId !== 826; // exclude UK
-  });
+  const stdFeatures = countries.features.filter(f => parseInt(f.id, 10) !== 826);
   const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
-  mapFeatures = allFeatures.map(feature => {
-    // Handle both numeric string IDs ("484") and plain string IDs ("GB-ENG")
-    let iso;
-    if (typeof feature.id === 'string' && feature.id.includes('-')) {
-      iso = feature.id; // GB-ENG, GB-SCT
-    } else {
-      const numId = parseInt(feature.id, 10);
-      iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
-    }
-    const teamId = iso ? ISO_TO_TEAM[iso] : null;
-    const path2d = buildPath2D(feature.geometry);
-    return { feature, teamId, path2d };
-  });
-
-  drawMap(null);
-
-  canvas.addEventListener('mousemove', onMapMouseMove);
-  canvas.addEventListener('mouseleave', () => { drawMap(null); hideMapTooltip(); });
-}
-
-function buildPath2D(geometry) {
-  const p = new Path2D();
-  if (!geometry) return p;
-
-  // Only process polygons — skip LineString, Point etc. (graticule lines)
-  if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') return p;
-
-  const rings = geometry.type === 'Polygon'
-    ? geometry.coordinates
-    : geometry.coordinates.flat();
-
-  rings.forEach(ring => {
-    ring.forEach(([lon, lat], i) => {
-      const [x, y] = projectCoord(lon, lat, mapW, mapH);
-      i === 0 ? p.moveTo(x, y) : p.lineTo(x, y);
+  // Pre-compute: store feature + teamId + use D3 pathGen for hit testing
+  mapFeatures = allFeatures
+    .filter(f => f.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'))
+    .map(feature => {
+      let iso;
+      if (typeof feature.id === 'string' && feature.id.includes('-')) {
+        iso = feature.id;
+      } else {
+        const numId = parseInt(feature.id, 10);
+        iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
+      }
+      const teamId = iso ? ISO_TO_TEAM[iso] : null;
+      return { feature, teamId };
     });
-    p.closePath();
-  });
 
-  return p;
+  // Draw oval clip (Natural Earth boundary)
+  drawMap(null, pathGen);
+
+  canvas.addEventListener('mousemove', e => onMapMouseMove(e, pathGen));
+  canvas.addEventListener('mouseleave', () => { drawMap(null, pathGen); hideMapTooltip(); });
 }
 
-function drawMap(hoveredTeamId) {
+function drawMap(hoveredTeamId, pathGen) {
   mapCtx.clearRect(0, 0, mapW, mapH);
 
-  // Ocean background
-  mapCtx.fillStyle = '#dde3f0';
-  mapCtx.fillRect(0, 0, mapW, mapH);
+  // Draw Natural Earth sphere (oval ocean)
+  mapCtx.beginPath();
+  pathGen({ type: 'Sphere' });
+  mapCtx.fillStyle = '#d6e0f5';
+  mapCtx.fill();
+
+  // Draw graticule (subtle grid)
+  mapCtx.beginPath();
+  pathGen(d3.geoGraticule()());
+  mapCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+  mapCtx.lineWidth = 0.4;
+  mapCtx.stroke();
 
   // Draw each country
-  mapFeatures.forEach(({ teamId, path2d }) => {
+  mapFeatures.forEach(({ feature, teamId }) => {
     const isParticipant = !!teamId;
-    const isHovered = teamId && teamId === hoveredTeamId;
+    const isHovered = teamId === hoveredTeamId;
 
     mapCtx.beginPath();
-    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c8c3b8';
-    mapCtx.fill(path2d);
-
+    pathGen(feature);
+    mapCtx.fillStyle = isHovered ? '#2550ff' : isParticipant ? '#9eb3ff' : '#c4bfb4';
+    mapCtx.fill();
     mapCtx.strokeStyle = '#f5f2eb';
     mapCtx.lineWidth = 0.4;
-    mapCtx.stroke(path2d);
+    mapCtx.stroke();
   });
+
+  // Redraw sphere outline on top
+  mapCtx.beginPath();
+  pathGen({ type: 'Sphere' });
+  mapCtx.strokeStyle = '#b8c8e8';
+  mapCtx.lineWidth = 1;
+  mapCtx.stroke();
 }
 
-function onMapMouseMove(event) {
+function onMapMouseMove(event, pathGen) {
   const rect = mapCanvas.getBoundingClientRect();
   const scaleX = mapW / rect.width;
   const mx = (event.clientX - rect.left) * scaleX;
   const my = (event.clientY - rect.top) * scaleX;
 
   let found = null;
-  // Check in reverse order (last drawn = on top)
   for (let i = mapFeatures.length - 1; i >= 0; i--) {
-    const { teamId, path2d } = mapFeatures[i];
-    if (teamId && mapCtx.isPointInPath(path2d, mx, my)) {
+    const { feature, teamId } = mapFeatures[i];
+    if (!teamId) continue;
+    // Use D3 geoContains for accurate hit testing (handles projection correctly)
+    const coords = mapProjection.invert([mx, my]);
+    if (coords && d3.geoContains(feature, coords)) {
       found = teamId;
       break;
     }
@@ -1190,11 +1185,11 @@ function onMapMouseMove(event) {
 
   if (found) {
     mapCanvas.style.cursor = 'pointer';
-    drawMap(found);
+    drawMap(found, pathGen);
     showMapTooltip(event, found);
   } else {
     mapCanvas.style.cursor = 'default';
-    drawMap(null);
+    drawMap(null, pathGen);
     hideMapTooltip();
   }
 }
