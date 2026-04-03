@@ -1012,25 +1012,12 @@ const NUM_TO_ISO = {
   218:'EC',531:'CW',384:'CI',528:'NL',752:'SE',788:'TN',392:'JP',56:'BE',
   818:'EG',364:'IR',554:'NZ',724:'ES',132:'CV',682:'SA',858:'UY',250:'FR',
   686:'SN',368:'IQ',578:'NO',32:'AR',12:'DZ',40:'AT',400:'JO',620:'PT',
-  180:'CD',860:'UZ',170:'CO',191:'HR',288:'GH',591:'PA'
+  180:'CD',860:'UZ',170:'CO',191:'HR',288:'GH',591:'PA',
+  826:'GB-ENG'  // UK polygon → England (both England & Scotland share this shape)
 };
 
-const GB_FEATURES = [
-  { type:'Feature', id:'GB-ENG', geometry:{ type:'Polygon', coordinates:[[
-    [-5.72,50.06],[-4.15,49.96],[-2.95,50.22],[-1.40,50.73],[-0.06,50.79],
-    [1.02,51.08],[1.75,51.38],[1.70,52.00],[1.35,52.93],[0.47,53.42],
-    [0.10,53.79],[-0.06,54.00],[-0.55,54.45],[-1.00,54.66],[-1.55,55.00],
-    [-2.00,55.00],[-2.50,54.50],[-3.10,54.00],[-2.85,53.50],[-3.10,53.30],
-    [-3.35,53.22],[-3.00,52.50],[-4.20,52.40],[-4.95,51.82],[-5.18,51.55],
-    [-4.60,51.25],[-3.40,50.72],[-5.72,50.06]
-  ]]}},
-  { type:'Feature', id:'GB-SCT', geometry:{ type:'Polygon', coordinates:[[
-    [-2.00,55.00],[-2.50,55.80],[-3.00,55.80],[-3.50,55.95],[-4.00,55.80],
-    [-5.00,55.80],[-5.20,56.50],[-5.80,57.00],[-5.50,57.60],
-    [-4.00,57.70],[-3.50,58.50],[-3.00,58.65],[-2.00,58.50],
-    [-1.75,57.50],[-2.00,57.00],[-1.55,56.00],[-2.00,55.00]
-  ]]}}
-];
+const GB_FEATURES = []; // No custom GB features — UK handled via numeric ID below
+
 
 let mapLoaded = false;
 
@@ -1075,7 +1062,6 @@ function renderSVGMap(container, topo) {
   const W = Math.max(container.clientWidth || container.offsetWidth || 900, 400);
   const H = Math.round(W * 0.54);
 
-  // Robinson projection (National Geographic style)
   const proj = d3.geoNaturalEarth1().scale(W / 6.3).translate([W / 2, H / 2]);
   const pathGen = d3.geoPath().projection(proj);
 
@@ -1086,57 +1072,47 @@ function renderSVGMap(container, topo) {
   svg.setAttribute('height', 'auto');
   svg.style.display = 'block';
 
-  // Use a projected graticule bounding box to find the actual oval dimensions
-  // Robinson maps to a specific aspect ratio — approximate with ellipse
-  const cx = W / 2, cy = H / 2;
-  const rx = W * 0.487, ry = H * 0.468;
+  // Get the actual projected sphere path — this IS the oval shape for NaturalEarth
+  const sphereD = pathGen({type:'Sphere'});
 
-  // Defs: clip ellipse
+  // Defs with clip using actual sphere shape
   const defs = document.createElementNS(svgNS, 'defs');
   const clipPath = document.createElementNS(svgNS, 'clipPath');
   clipPath.setAttribute('id', 'map-clip');
-  const clipEl = document.createElementNS(svgNS, 'ellipse');
-  clipEl.setAttribute('cx', cx); clipEl.setAttribute('cy', cy);
-  clipEl.setAttribute('rx', rx); clipEl.setAttribute('ry', ry);
-  clipPath.appendChild(clipEl);
+  const clipShape = document.createElementNS(svgNS, 'path');
+  clipShape.setAttribute('d', sphereD);
+  clipPath.appendChild(clipShape);
   defs.appendChild(clipPath);
   svg.appendChild(defs);
 
-  // Page background
+  // Page background (outside oval)
   const bg = document.createElementNS(svgNS, 'rect');
   bg.setAttribute('width', W); bg.setAttribute('height', H);
   bg.setAttribute('fill', '#f5f2eb');
   svg.appendChild(bg);
 
-  // Ocean ellipse
-  const ocean = document.createElementNS(svgNS, 'ellipse');
-  ocean.setAttribute('cx', cx); ocean.setAttribute('cy', cy);
-  ocean.setAttribute('rx', rx); ocean.setAttribute('ry', ry);
+  // Ocean — same sphere path, filled blue
+  const ocean = document.createElementNS(svgNS, 'path');
+  ocean.setAttribute('d', sphereD);
   ocean.setAttribute('fill', '#d6e0f5');
+  ocean.setAttribute('stroke', 'none');
   svg.appendChild(ocean);
 
-  // Countries group — clipped to ellipse
+  // Countries group — clipped so nothing overflows the oval
   const g = document.createElementNS(svgNS, 'g');
   g.setAttribute('clip-path', 'url(#map-clip)');
   svg.appendChild(g);
 
-  // Build features
+  // All countries including UK (826)
   const countries = topojson.feature(topo, topo.objects.countries);
-  const stdFeatures = countries.features.filter(f =>
-    parseInt(f.id, 10) !== 826 &&
+  const allFeatures = countries.features.filter(f =>
     f.geometry &&
     (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon')
   );
-  const allFeatures = [...stdFeatures, ...GB_FEATURES];
 
   allFeatures.forEach(feature => {
-    let iso;
-    if (typeof feature.id === 'string' && feature.id.includes('-')) {
-      iso = feature.id;
-    } else {
-      const numId = parseInt(feature.id, 10);
-      iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
-    }
+    const numId = parseInt(feature.id, 10);
+    const iso = isNaN(numId) ? null : NUM_TO_ISO[numId];
     const teamId = iso ? ISO_TO_TEAM[iso] : null;
     const isParticipant = !!teamId;
 
@@ -1167,10 +1143,9 @@ function renderSVGMap(container, topo) {
     g.appendChild(path);
   });
 
-  // Ellipse border on top
-  const border = document.createElementNS(svgNS, 'ellipse');
-  border.setAttribute('cx', cx); border.setAttribute('cy', cy);
-  border.setAttribute('rx', rx); border.setAttribute('ry', ry);
+  // Sphere border on top
+  const border = document.createElementNS(svgNS, 'path');
+  border.setAttribute('d', sphereD);
   border.setAttribute('fill', 'none');
   border.setAttribute('stroke', '#a0b4d8');
   border.setAttribute('stroke-width', '1.5');
