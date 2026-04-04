@@ -221,29 +221,15 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 @media(max-width:768px){header{padding:16px 20px}.container{padding:24px 20px 100px}.action-bar{padding:12px 20px}.kit-grid{grid-template-columns:1fr}.groups-grid{grid-template-columns:1fr}}
 
 /* ─── MODAL ─── */
-.kit-modal-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.6);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 250ms ease}
+.kit-modal-overlay{position:fixed;inset:0;background:rgba(10,10,10,0.75);backdrop-filter:blur(8px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 250ms ease}
 .kit-modal-overlay.open{opacity:1;pointer-events:all}
-.kit-modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px 24px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:400px;width:90%;position:relative;transform:translateY(12px);transition:transform 250ms ease;box-shadow:0 24px 64px rgba(0,0,0,0.15)}
-.kit-modal-overlay.open .kit-modal{transform:translateY(0)}
-.kit-modal-img{max-width:280px;max-height:360px;object-fit:contain;filter:drop-shadow(0 8px 24px rgba(37,80,255,0.15))}
-.kit-modal-name{font-family:var(--f-display);font-size:20px;letter-spacing:3px;color:var(--text);font-weight:900}
-.kit-modal-type{font-family:var(--f-display);font-size:10px;letter-spacing:2px;text-transform:uppercase;background:var(--capsule-bg);color:var(--capsule-text);padding:3px 10px;border-radius:20px;font-weight:600}
-/* Kit thumbnails */
-.kit-thumbs{display:flex;gap:4px;padding:4px 6px;justify-content:center;background:rgba(240,237,229,0.9);width:100%}
-.kit-thumb{width:32px;height:38px;object-fit:contain;border-radius:3px;border:2px solid transparent;cursor:pointer;opacity:0.55;transition:var(--transition)}
-.kit-thumb.active{border-color:var(--blue);opacity:1}
-.kit-thumb:hover{opacity:0.9}
-
-/* Modal carousel */
-.kit-modal-dots{display:flex;gap:6px;justify-content:center;align-items:center}
-.modal-dot{width:7px;height:7px;border-radius:50%;background:var(--border);cursor:pointer;transition:var(--transition)}
-.modal-dot.active{background:var(--blue);transform:scale(1.2)}
-.kit-modal-arrow{position:absolute;top:50%;transform:translateY(-50%);background:var(--surface2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:var(--transition);left:8px;line-height:1;padding-bottom:2px}
-.kit-modal-arrow-next{left:auto;right:8px}
-.kit-modal-arrow:hover{border-color:var(--blue);color:var(--blue)}
-.kit-modal-close{position:absolute;top:10px;right:10px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
-.kit-modal-close:hover{border-color:var(--border-bright);color:var(--text)}
-.kit-modal-close:hover{border-color:var(--border-bright);color:var(--text)}
+.kit-modal{background:transparent;border:none;padding:0;display:flex;align-items:center;justify-content:center;gap:16px;position:relative}
+.kit-modal-img{max-width:min(360px,70vw);max-height:80vh;object-fit:contain;filter:drop-shadow(0 8px 40px rgba(0,0,0,0.5));display:block}
+.kit-modal-close{position:fixed;top:20px;right:20px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:var(--transition);z-index:10}
+.kit-modal-close:hover{background:rgba(255,255,255,0.25)}
+.kit-modal-arrow{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:30px;display:flex;align-items:center;justify-content:center;transition:var(--transition);flex-shrink:0;line-height:1;padding-bottom:3px}
+.kit-modal-arrow:hover{background:rgba(255,255,255,0.25)}
+.kit-modal-arrow-next{}
 .kit-upload-small{position:absolute;bottom:34px;right:4px;background:var(--capsule-bg);border:none;color:var(--capsule-text);font-size:10px;padding:3px 8px;border-radius:20px;cursor:pointer;z-index:2;transition:var(--transition);white-space:nowrap;font-family:var(--f-display);letter-spacing:0.5px;font-weight:600}
 .kit-upload-small:hover{background:#333}
 .kit-upload-small input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
@@ -324,9 +310,6 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
     <button class="kit-modal-arrow" id="kit-modal-prev" onclick="modalPrev()">‹</button>
     <img class="kit-modal-img" id="kit-modal-img" src="" alt="">
     <button class="kit-modal-arrow kit-modal-arrow-next" id="kit-modal-next" onclick="modalNext()">›</button>
-    <div id="kit-modal-dots" class="kit-modal-dots"></div>
-    <div class="kit-modal-name" id="kit-modal-name"></div>
-    <div class="kit-modal-type" id="kit-modal-type"></div>
   </div>
 </div>
 
@@ -589,7 +572,6 @@ function buildKitOption(team, type, chosen) {
     onclick="selectKit('${team.id}','${type}')"
     ondblclick="openKitModal('${team.id}','${type}')">
     <img src="${mainSrc}" id="kitimg-${team.id}-${type}" alt="${label}" onerror="this.style.opacity='0.1'">
-    <div class="kit-thumbs" id="kitthumbs-${team.id}-${type}"></div>
     <div class="kit-option-label">${label}</div>
   </div>`;
 }
@@ -932,30 +914,17 @@ function openKitModal(teamId, type) {
 
 function renderModal() {
   const { imgs, index } = modalState;
-  const team = getTeam(modalState.teamId);
   const src = imgs[index] || imgs[0];
   const total = imgs.length;
 
   document.getElementById('kit-modal-img').src = src;
-  document.getElementById('kit-modal-name').innerHTML = flagImg(team.flag,'24px') + ' ' + team.name;
-  document.getElementById('kit-modal-type').textContent = modalState.type.toUpperCase();
-
-  const dotsEl = document.getElementById('kit-modal-dots');
-  if (total > 1) {
-    dotsEl.innerHTML = imgs.map((_,i) =>
-      `<span class="modal-dot ${i===index?'active':''}" onclick="modalGoTo(${i})"></span>`
-    ).join('');
-    dotsEl.style.display = 'flex';
-  } else {
-    dotsEl.style.display = 'none';
-  }
 
   const prev = document.getElementById('kit-modal-prev');
   const next = document.getElementById('kit-modal-next');
-  if (prev) prev.style.display = total > 1 ? 'flex' : 'none';
-  if (next) next.style.display = total > 1 ? 'flex' : 'none';
-  if (prev) prev.style.opacity = index === 0 ? '0.3' : '1';
-  if (next) next.style.opacity = index === total-1 ? '0.3' : '1';
+  prev.style.display = total > 1 ? 'flex' : 'none';
+  next.style.display = total > 1 ? 'flex' : 'none';
+  prev.style.opacity = index === 0 ? '0.3' : '1';
+  next.style.opacity = index === total - 1 ? '0.3' : '1';
 }
 
 function modalGoTo(i) {
