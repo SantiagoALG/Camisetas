@@ -963,9 +963,7 @@ function closeKitModal(e) {
   document.getElementById('kit-modal-overlay').classList.remove('open');
   modalState.slides = null;
 }
-  document.getElementById('kit-modal-overlay').classList.remove('open');
-}
-document.addEventListener('keydown', e => { if(e.key==='Escape') document.getElementById('kit-modal-overlay').classList.remove('open'); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') { document.getElementById('kit-modal-overlay').classList.remove('open'); if(modalState) modalState.slides = null; } });
 
 // ════════════════════════════════════════
 // GALERÍA
