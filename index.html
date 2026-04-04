@@ -901,10 +901,9 @@ let modalState = { teamId: null, type: null, index: 0 };
 function openKitModal(teamId, type) {
   const team = getTeam(teamId);
   const kitType = type || state.kitChoices[teamId] || 'local';
-  modalState = { teamId, type: kitType, index: 0, imgs: [kitImgs(team, kitType)[0]] };
+  modalState = { teamId, type: kitType, index: 0, imgs: [kitImgs(team, kitType)[0]], slides: null };
   renderModal();
   document.getElementById('kit-modal-overlay').classList.add('open');
-  // Resolve actual images async and refresh carousel
   resolveKitImgs(team, kitType).then(valid => {
     if (valid.length === 0) return;
     modalState.imgs = valid;
@@ -913,28 +912,57 @@ function openKitModal(teamId, type) {
 }
 
 function renderModal() {
-  const { imgs, index } = modalState;
+  const { imgs, index, slides } = modalState;
   const src = imgs[index] || imgs[0];
-  const total = imgs.length;
 
   document.getElementById('kit-modal-img').src = src;
 
   const prev = document.getElementById('kit-modal-prev');
   const next = document.getElementById('kit-modal-next');
-  prev.style.display = total > 1 ? 'flex' : 'none';
-  next.style.display = total > 1 ? 'flex' : 'none';
-  prev.style.opacity = index === 0 ? '0.3' : '1';
-  next.style.opacity = index === total - 1 ? '0.3' : '1';
+
+  if (slides) {
+    // Map modal: arrows navigate between slides
+    const total = slides.length;
+    prev.style.display = total > 1 ? 'flex' : 'none';
+    next.style.display = total > 1 ? 'flex' : 'none';
+    prev.style.opacity = modalState.index === 0 ? '0.3' : '1';
+    next.style.opacity = modalState.index === total - 1 ? '0.3' : '1';
+  } else {
+    // Normal kit modal: arrows navigate between images
+    const total = imgs.length;
+    prev.style.display = total > 1 ? 'flex' : 'none';
+    next.style.display = total > 1 ? 'flex' : 'none';
+    prev.style.opacity = index === 0 ? '0.3' : '1';
+    next.style.opacity = index === total - 1 ? '0.3' : '1';
+  }
 }
 
 function modalGoTo(i) {
   modalState.index = Math.max(0, Math.min(i, modalState.imgs.length - 1));
   renderModal();
 }
-function modalPrev() { modalGoTo(modalState.index - 1); }
-function modalNext() { modalGoTo(modalState.index + 1); }
+
+function modalPrev() {
+  if (modalState.slides) {
+    // Map modal: navigate between slides (local/visitante of each team)
+    if (modalState.index > 0) loadMapModalSlide(modalState.index - 1);
+  } else {
+    modalGoTo(modalState.index - 1);
+  }
+}
+
+function modalNext() {
+  if (modalState.slides) {
+    if (modalState.index < modalState.slides.length - 1) loadMapModalSlide(modalState.index + 1);
+  } else {
+    modalGoTo(modalState.index + 1);
+  }
+}
 function closeKitModal(e) {
   if (e && e.target !== document.getElementById('kit-modal-overlay')) return;
+  document.getElementById('kit-modal-overlay').classList.remove('open');
+  modalState.slides = null;
+}
   document.getElementById('kit-modal-overlay').classList.remove('open');
 }
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.getElementById('kit-modal-overlay').classList.remove('open'); });
@@ -1217,6 +1245,10 @@ function renderSVGMap(container, topo) {
         path.setAttribute('fill', '#9eb3ff');
         hideMapTooltip();
       });
+      path.addEventListener('click', () => {
+        hideMapTooltip();
+        openMapKitModal(teamIds);
+      });
     }
     g.appendChild(path);
   });
@@ -1233,7 +1265,6 @@ function renderSVGMap(container, topo) {
 }
 
 function showMapTooltip(event, teamIds) {
-  // Accept string or array
   const ids = Array.isArray(teamIds) ? teamIds : [teamIds];
   const tooltip = document.getElementById('map-tooltip');
   const container = document.getElementById('tt-teams-container');
@@ -1241,7 +1272,6 @@ function showMapTooltip(event, teamIds) {
   container.innerHTML = ids.map(teamId => {
     const team = getTeam(teamId);
     if (!team) return '';
-    const chosen = state.kitChoices[teamId] || 'local';
     return `
       <div class="map-tt-header">
         <img class="map-tt-flag" src="flags/${team.flag}.svg" alt="">
@@ -1249,11 +1279,11 @@ function showMapTooltip(event, teamIds) {
         <span class="map-tt-group">GRP ${team.groupId}</span>
       </div>
       <div class="map-tt-kits">
-        <div class="map-tt-kit ${chosen==='local'?'chosen':''}">
+        <div class="map-tt-kit">
           <img src="${kitImgs(team,'local')[0]}" alt="Local">
           <span class="map-tt-kit-label">Local</span>
         </div>
-        <div class="map-tt-kit ${chosen==='visitante'?'chosen':''}">
+        <div class="map-tt-kit">
           <img src="${kitImgs(team,'visitante')[0]}" alt="Visitante">
           <span class="map-tt-kit-label">Visitante</span>
         </div>
@@ -1262,7 +1292,6 @@ function showMapTooltip(event, teamIds) {
     `;
   }).join('');
 
-  // Add disclaimer for UK
   if (ids.includes('escocia') || ids.includes('inglaterra')) {
     container.innerHTML += `
       <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-family:var(--f-display);font-size:9px;letter-spacing:0.5px;color:var(--text-dim);line-height:1.4">
@@ -1272,6 +1301,32 @@ function showMapTooltip(event, teamIds) {
 
   positionTooltip(event, tooltip);
   tooltip.classList.add('visible');
+}
+
+// Map click — open kit modal cycling through all kits of clicked country/ies
+function openMapKitModal(teamIds) {
+  const ids = Array.isArray(teamIds) ? teamIds : [teamIds];
+  // Build flat slide list: local then visitante for each team
+  const slides = ids.flatMap(id => ['local','visitante'].map(type => ({ teamId: id, type })));
+  modalState = { teamId: slides[0].teamId, type: slides[0].type, index: 0, imgs: [], slides };
+  // Load first slide
+  loadMapModalSlide(0);
+}
+
+function loadMapModalSlide(slideIndex) {
+  const { slides } = modalState;
+  if (slideIndex < 0 || slideIndex >= slides.length) return;
+  const { teamId, type } = slides[slideIndex];
+  const team = getTeam(teamId);
+  modalState.index = slideIndex;
+  modalState.teamId = teamId;
+  modalState.type = type;
+  resolveKitImgs(team, type).then(valid => {
+    modalState.imgs = valid.length ? valid : [kitImgs(team, type)[0]];
+    modalState.imgIndex = 0;
+    renderModal();
+    document.getElementById('kit-modal-overlay').classList.add('open');
+  });
 }
 
 function hideMapTooltip() {
