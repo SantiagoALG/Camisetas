@@ -912,52 +912,24 @@ function openKitModal(teamId, type) {
 }
 
 function renderModal() {
-  const { imgs, index, slides } = modalState;
-  const src = imgs[index] || imgs[0];
-
-  document.getElementById('kit-modal-img').src = src;
+  const { imgs, index } = modalState;
+  const total = imgs.length;
+  document.getElementById('kit-modal-img').src = imgs[index] || imgs[0];
 
   const prev = document.getElementById('kit-modal-prev');
   const next = document.getElementById('kit-modal-next');
-
-  if (slides) {
-    // Map modal: arrows navigate between slides
-    const total = slides.length;
-    prev.style.display = total > 1 ? 'flex' : 'none';
-    next.style.display = total > 1 ? 'flex' : 'none';
-    prev.style.opacity = modalState.index === 0 ? '0.3' : '1';
-    next.style.opacity = modalState.index === total - 1 ? '0.3' : '1';
-  } else {
-    // Normal kit modal: arrows navigate between images
-    const total = imgs.length;
-    prev.style.display = total > 1 ? 'flex' : 'none';
-    next.style.display = total > 1 ? 'flex' : 'none';
-    prev.style.opacity = index === 0 ? '0.3' : '1';
-    next.style.opacity = index === total - 1 ? '0.3' : '1';
-  }
+  prev.style.display = total > 1 ? 'flex' : 'none';
+  next.style.display = total > 1 ? 'flex' : 'none';
+  prev.style.opacity = index === 0 ? '0.3' : '1';
+  next.style.opacity = index === total - 1 ? '0.3' : '1';
 }
 
 function modalGoTo(i) {
   modalState.index = Math.max(0, Math.min(i, modalState.imgs.length - 1));
   renderModal();
 }
-
-function modalPrev() {
-  if (modalState.slides) {
-    // Map modal: navigate between slides (local/visitante of each team)
-    if (modalState.index > 0) loadMapModalSlide(modalState.index - 1);
-  } else {
-    modalGoTo(modalState.index - 1);
-  }
-}
-
-function modalNext() {
-  if (modalState.slides) {
-    if (modalState.index < modalState.slides.length - 1) loadMapModalSlide(modalState.index + 1);
-  } else {
-    modalGoTo(modalState.index + 1);
-  }
-}
+function modalPrev() { modalGoTo(modalState.index - 1); }
+function modalNext() { modalGoTo(modalState.index + 1); }
 function closeKitModal(e) {
   if (e && e.target !== document.getElementById('kit-modal-overlay')) return;
   document.getElementById('kit-modal-overlay').classList.remove('open');
@@ -1301,27 +1273,22 @@ function showMapTooltip(event, teamIds) {
   tooltip.classList.add('visible');
 }
 
-// Map click — open kit modal cycling through all kits of clicked country/ies
+// Map click — open kit modal with all images of the country flattened into one list
 function openMapKitModal(teamIds) {
   const ids = Array.isArray(teamIds) ? teamIds : [teamIds];
-  // Build flat slide list: local then visitante for each team
-  const slides = ids.flatMap(id => ['local','visitante'].map(type => ({ teamId: id, type })));
-  modalState = { teamId: slides[0].teamId, type: slides[0].type, index: 0, imgs: [], slides };
-  // Load first slide
-  loadMapModalSlide(0);
-}
 
-function loadMapModalSlide(slideIndex) {
-  const { slides } = modalState;
-  if (slideIndex < 0 || slideIndex >= slides.length) return;
-  const { teamId, type } = slides[slideIndex];
-  const team = getTeam(teamId);
-  modalState.index = slideIndex;
-  modalState.teamId = teamId;
-  modalState.type = type;
-  resolveKitImgs(team, type).then(valid => {
-    modalState.imgs = valid.length ? valid : [kitImgs(team, type)[0]];
-    modalState.imgIndex = 0;
+  // Collect all valid images across all teams and kit types
+  const promises = ids.flatMap(id => {
+    const team = getTeam(id);
+    return ['local', 'visitante'].map(type =>
+      resolveKitImgs(team, type)
+    );
+  });
+
+  Promise.all(promises).then(results => {
+    const allImgs = results.flat().filter(Boolean);
+    if (!allImgs.length) return;
+    modalState = { teamId: ids[0], type: 'local', index: 0, imgs: allImgs, slides: null };
     renderModal();
     document.getElementById('kit-modal-overlay').classList.add('open');
   });
