@@ -684,17 +684,47 @@ function initGroupsDone() { state.groups.forEach(g=>{ state.groupsDone[g.id]=tru
 
 let dragSrc=null;
 function setupDragDrop() {
+  // Remove old listeners by replacing each element with a clone
   document.querySelectorAll('.ranking-item').forEach(item => {
-    item.addEventListener('dragstart', function(e){ dragSrc=this; this.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
-    item.addEventListener('dragover',  function(e){ e.preventDefault(); document.querySelectorAll('.ranking-item').forEach(i=>i.classList.remove('drag-over')); this.classList.add('drag-over'); });
-    item.addEventListener('drop', function(e){
-      e.preventDefault(); if(dragSrc===this) return;
-      const gid=this.dataset.group, list=document.getElementById(`ranking-${gid}`), items=[...list.querySelectorAll('.ranking-item')];
-      const si=items.indexOf(dragSrc), di=items.indexOf(this), r=state.groupRankings[gid];
-      const [m]=r.splice(si,1); r.splice(di,0,m);
-      markGroupDone(gid); updateGroupCard(gid);
+    const clone = item.cloneNode(true);
+    item.parentNode.replaceChild(clone, item);
+  });
+
+  let dragOver = null;
+
+  document.querySelectorAll('.ranking-item').forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      dragSrc = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
     });
-    item.addEventListener('dragend', function(){ this.classList.remove('dragging'); document.querySelectorAll('.ranking-item').forEach(i=>i.classList.remove('drag-over')); });
+
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (dragOver === this) return; // skip if same element
+      if (dragOver) dragOver.classList.remove('drag-over');
+      dragOver = this;
+      this.classList.add('drag-over');
+    });
+
+    item.addEventListener('drop', function(e) {
+      e.preventDefault();
+      if (dragSrc === this) return;
+      const gid = this.dataset.group;
+      const list = document.getElementById(`ranking-${gid}`);
+      const items = [...list.querySelectorAll('.ranking-item')];
+      const si = items.indexOf(dragSrc), di = items.indexOf(this);
+      const r = state.groupRankings[gid];
+      const [m] = r.splice(si, 1);
+      r.splice(di, 0, m);
+      markGroupDone(gid);
+      updateGroupCard(gid);
+    });
+
+    item.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      if (dragOver) { dragOver.classList.remove('drag-over'); dragOver = null; }
+    });
   });
 }
 
