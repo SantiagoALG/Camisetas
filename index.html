@@ -766,23 +766,59 @@ function getQualifiedTeams() {
   ];
 }
 
+// Helper: get team by group position
+function getSlot(pos) {
+  const type = pos[0]; // '1', '2', or '3'
+  const gid  = pos.slice(1);
+  const ranking = state.groupRankings[gid] || (state.groups.find(g=>g.id===gid)?.teams.map(t=>t.id) || []);
+  if (type === '1') return ranking[0] || null;
+  if (type === '2') return ranking[1] || null;
+  if (type === '3') {
+    // gid is a group set string like 'ABCDF' — find which best-third came from any of those groups
+    const groups = gid.split('');
+    for (const g of groups) {
+      const r = state.groupRankings[g] || (state.groups.find(x=>x.id===g)?.teams.map(t=>t.id) || []);
+      const third = r[2];
+      if (third && state.bestThirds.includes(third)) return third;
+    }
+    return null;
+  }
+  return null;
+}
+
 function buildBracket() {
-  const teams = getQualifiedTeams(); // 32 teams
   state.bracket = { left: [], right: [], final: null };
 
-  // Split 32 teams: left side gets teams 0-15, right side 16-31
-  const leftTeams  = teams.slice(0, 16);
-  const rightTeams = teams.slice(16, 32);
+  // Official Round of 32 matchups (FIFA Match 73–88)
+  // Left side: matches 73-80 (top half of bracket)
+  // Right side: matches 81-88 (bottom half of bracket)
+  // Source: Wikipedia 2026 FIFA World Cup knockout stage
 
-  // Build left side rounds: R32(8 matches) → R16(4) → QF(2) → SF(1)
-  const buildSide = (sideTeams, prefix) => {
+  const r32Left = [
+    { id:'L-r32-0', label:'M73', teams:[ getSlot('2A'), getSlot('2B') ], winner:null },
+    { id:'L-r32-1', label:'M74', teams:[ getSlot('1E'), getSlot('3ABCDF') ], winner:null },
+    { id:'L-r32-2', label:'M75', teams:[ getSlot('1F'), getSlot('2C') ], winner:null },
+    { id:'L-r32-3', label:'M76', teams:[ getSlot('1C'), getSlot('2F') ], winner:null },
+    { id:'L-r32-4', label:'M77', teams:[ getSlot('1I'), getSlot('3CDFGH') ], winner:null },
+    { id:'L-r32-5', label:'M78', teams:[ getSlot('2E'), getSlot('2I') ], winner:null },
+    { id:'L-r32-6', label:'M79', teams:[ getSlot('1A'), getSlot('3CEFHI') ], winner:null },
+    { id:'L-r32-7', label:'M80', teams:[ getSlot('1L'), getSlot('3EHIJK') ], winner:null },
+  ];
+
+  const r32Right = [
+    { id:'R-r32-0', label:'M81', teams:[ getSlot('1D'), getSlot('3BEFIJ') ], winner:null },
+    { id:'R-r32-1', label:'M82', teams:[ getSlot('1G'), getSlot('3AEHIJ') ], winner:null },
+    { id:'R-r32-2', label:'M83', teams:[ getSlot('2K'), getSlot('2L') ], winner:null },
+    { id:'R-r32-3', label:'M84', teams:[ getSlot('1H'), getSlot('2J') ], winner:null },
+    { id:'R-r32-4', label:'M85', teams:[ getSlot('1B'), getSlot('3EFGIJ') ], winner:null },
+    { id:'R-r32-5', label:'M86', teams:[ getSlot('1J'), getSlot('2H') ], winner:null },
+    { id:'R-r32-6', label:'M87', teams:[ getSlot('1K'), getSlot('3DEIJL') ], winner:null },
+    { id:'R-r32-7', label:'M88', teams:[ getSlot('2D'), getSlot('2G') ], winner:null },
+  ];
+
+  const buildEmptyRounds = (r32matches, prefix) => {
     const rounds = [];
-    // R32 — 8 matches
-    const r32 = [];
-    for (let i = 0; i < 16; i += 2)
-      r32.push({ id:`${prefix}-r32-${i/2}`, teams:[sideTeams[i], sideTeams[i+1]], winner:null });
-    rounds.push({ name:'DIECISEISAVOS', matches: r32 });
-    // R16, QF, SF
+    rounds.push({ name:'DIECISEISAVOS', matches: r32matches });
     ['OCTAVOS','CUARTOS','SEMIFINAL'].forEach((name, ri) => {
       const count = 4 / Math.pow(2, ri);
       const matches = [];
@@ -793,8 +829,8 @@ function buildBracket() {
     return rounds;
   };
 
-  state.bracket.left  = buildSide(leftTeams,  'L');
-  state.bracket.right = buildSide(rightTeams, 'R');
+  state.bracket.left  = buildEmptyRounds(r32Left,  'L');
+  state.bracket.right = buildEmptyRounds(r32Right, 'R');
   state.bracket.final = { id:'final-0', teams:[null,null], winner:null };
 
   renderBracket();
