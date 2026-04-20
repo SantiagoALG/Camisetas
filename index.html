@@ -273,8 +273,11 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 /* The downloadable card */
 .champion-card{width:420px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:40px 32px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.5)}
 .champion-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,80,255,0.06) 0%,transparent 60%);pointer-events:none}
-.champion-card-logo{height:56px;width:auto;object-fit:contain;margin-bottom:4px}
+.champion-card-logo{height:168px;width:auto;object-fit:contain;margin-bottom:4px}
 .champion-card-kittype{font-family:var(--f-display);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-top:-8px}
+.champion-card-tercero{width:100%;text-align:center;padding-top:12px;border-top:1px solid var(--border);margin-top:4px}
+.ch-tercero-label{font-family:var(--f-display);font-size:10px;letter-spacing:2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px}
+.ch-tercero-name{font-family:var(--f-display);font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text);text-transform:uppercase}
 .champion-card-eyebrow{font-family:var(--f-display);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);padding:4px 14px;border-radius:20px}
 .champion-card-flag{font-size:56px;line-height:1;margin:4px 0}
 .champion-card-kit{width:180px;height:220px;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(37,80,255,0.2));animation:float 3s ease-in-out infinite}
@@ -835,6 +838,7 @@ function buildBracket() {
   state.bracket.left  = buildEmptyRounds(r32Left,  'L');
   state.bracket.right = buildEmptyRounds(r32Right, 'R');
   state.bracket.final = { id:'final-0', teams:[null,null], winner:null };
+  state.bracket.tercero = { id:'tercero-0', teams:[null,null], winner:null };
 
   renderBracket();
 }
@@ -873,11 +877,21 @@ function renderBracket() {
   });
 
   const final = state.bracket.final;
+  const tercero = state.bracket.tercero;
+
+  // Feed semifinal losers into third place match
+  const leftSF  = state.bracket.left[3]?.matches[0];
+  const rightSF = state.bracket.right[3]?.matches[0];
+  if (leftSF?.winner)  tercero.teams[0] = leftSF.teams.find(t => t !== leftSF.winner) || null;
+  if (rightSF?.winner) tercero.teams[1] = rightSF.teams.find(t => t !== rightSF.winner) || null;
+
   document.getElementById('bracket-container').innerHTML = `
     <div class="bracket-side">${leftHTML}</div>
     <div class="bracket-final-col">
       <div class="bracket-final-label">FINAL</div>
       ${renderMatch(final)}
+      <div class="bracket-final-label" style="margin-top:24px;font-size:10px;opacity:0.7">3er LUGAR</div>
+      ${renderMatch(tercero)}
     </div>
     <div class="bracket-side">${rightHTML}</div>
   `;
@@ -939,6 +953,7 @@ function findMatch(matchId) {
     }
   }
   if (state.bracket.final.id === matchId) return { isFinal: true };
+  if (state.bracket.tercero?.id === matchId) return { isTercero: true };
   return null;
 }
 
@@ -950,6 +965,13 @@ function pickWinner(matchId, winnerId) {
     state.bracket.final.winner = winnerId;
     renderBracket();
     setTimeout(() => showChampionModal(winnerId), 400);
+    return;
+  }
+
+  if (loc.isTercero) {
+    state.bracket.tercero.winner = winnerId;
+    renderBracket();
+    showToast(`${flagImg(getTeam(winnerId).flag,'16px')} ${getTeam(winnerId).name} — 3er lugar`);
     return;
   }
 
@@ -1199,6 +1221,17 @@ function showChampionModal(teamId) {
   document.getElementById('ch-kit-img').src = kitSrc;
   document.getElementById('ch-name').textContent = team.name.toUpperCase();
   document.getElementById('ch-kittype').textContent = kitType === 'local' ? 'Camiseta Local' : 'Camiseta Visitante';
+
+  // Third place
+  const terceroWinnerId = state.bracket.tercero?.winner;
+  const terceroEl = document.getElementById('ch-tercero');
+  if (terceroWinnerId) {
+    const terceroTeam = getTeam(terceroWinnerId);
+    document.getElementById('ch-tercero-name').innerHTML = flagImg(terceroTeam.flag, '16px') + ' ' + terceroTeam.name;
+    terceroEl.style.display = 'block';
+  } else {
+    terceroEl.style.display = 'none';
+  }
 
   document.getElementById('champion-modal-overlay').classList.add('open');
 }
@@ -1513,6 +1546,10 @@ init();
         <div class="ch-deco-line"></div>
         <div class="ch-deco-trophy">🏆</div>
         <div class="ch-deco-line"></div>
+      </div>
+      <div class="champion-card-tercero" id="ch-tercero" style="display:none">
+        <div class="ch-tercero-label">🥉 3er lugar</div>
+        <div class="ch-tercero-name" id="ch-tercero-name"></div>
       </div>
     </div>
 
