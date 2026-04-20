@@ -211,7 +211,7 @@ nav{display:flex;gap:4px}
 .action-bar-info strong{color:var(--text)}
 
 /* ─── TOAST ─── */
-.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--capsule-bg);border:none;color:var(--capsule-text);padding:12px 20px;border-radius:20px;font-family:var(--f-display);font-size:12px;letter-spacing:0.5px;font-weight:600;opacity:0;transition:all 300ms ease;pointer-events:none;z-index:200;white-space:nowrap}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--capsule-bg);border:none;color:var(--capsule-text);padding:12px 20px;border-radius:20px;font-family:var(--f-display);font-size:12px;letter-spacing:0.5px;font-weight:600;opacity:0;transition:all 300ms ease;pointer-events:none;z-index:200;white-space:nowrap;display:flex;align-items:center;gap:8px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* ─── SCROLLBAR ─── */
@@ -273,6 +273,8 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 /* The downloadable card */
 .champion-card{width:420px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:40px 32px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.5)}
 .champion-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,80,255,0.06) 0%,transparent 60%);pointer-events:none}
+.champion-card-logo{height:56px;width:auto;object-fit:contain;margin-bottom:4px}
+.champion-card-kittype{font-family:var(--f-display);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-top:-8px}
 .champion-card-eyebrow{font-family:var(--f-display);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);padding:4px 14px;border-radius:20px}
 .champion-card-flag{font-size:56px;line-height:1;margin:4px 0}
 .champion-card-kit{width:180px;height:220px;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(37,80,255,0.2));animation:float 3s ease-in-out infinite}
@@ -557,7 +559,7 @@ function resolveKitImgs(team, type) {
   }))).then(results => results.filter(Boolean));
 }
 function flagImg(code, size='22px') { return `<img src="flags/${code}.svg" alt="${code}" style="width:${size};height:auto;border-radius:2px;vertical-align:middle;flex-shrink:0">`; }
-function showToast(msg, d=2500) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
+function showToast(msg, d=2500) { const t=document.getElementById('toast'); t.innerHTML=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
 
 // ── VIEW 1 ──
 function renderKitsView() {
@@ -963,7 +965,7 @@ function pickWinner(matchId, winnerId) {
   }
 
   renderBracket();
-  showToast(`${getTeam(winnerId).flag} ${getTeam(winnerId).name} avanza`);
+  showToast(`${flagImg(getTeam(winnerId).flag,'16px')} ${getTeam(winnerId).name} avanza`);
 }
 
 function undoWinner(matchId) {
@@ -1193,10 +1195,10 @@ function showChampionModal(teamId) {
   const kitType = state.kitChoices[teamId] || 'local';
   const kitSrc = getKitSrc(teamId);
 
-  // Flag — use img tag same as rest of site
   document.getElementById('ch-flag-img').innerHTML = flagImg(team.flag, '56px');
   document.getElementById('ch-kit-img').src = kitSrc;
   document.getElementById('ch-name').textContent = team.name.toUpperCase();
+  document.getElementById('ch-kittype').textContent = kitType === 'local' ? 'Camiseta Local' : 'Camiseta Visitante';
 
   document.getElementById('champion-modal-overlay').classList.add('open');
 }
@@ -1501,10 +1503,12 @@ init();
     <button class="champion-modal-close" onclick="closeChampionModal()">✕</button>
 
     <div class="champion-card" id="champion-card">
+      <img src="images/logo-lmi.svg" alt="La Media Inglesa" class="champion-card-logo" onerror="this.style.display='none'">
       <div class="champion-card-eyebrow">MUNDIAL 2026 — CAMPEÓN</div>
       <div class="champion-card-flag" id="ch-flag-img"></div>
       <img class="champion-card-kit" id="ch-kit-img" src="" alt="">
       <div class="champion-card-name" id="ch-name"></div>
+      <div class="champion-card-kittype" id="ch-kittype"></div>
       <div class="champion-card-decoration">
         <div class="ch-deco-line"></div>
         <div class="ch-deco-trophy">🏆</div>
