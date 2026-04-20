@@ -372,7 +372,7 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
   <div class="container">
     <div class="page-title">MEJORES TERCEROS</div>
     <div class="page-subtitle">Elige los 8 mejores terceros de los 12 grupos que pasan a dieciseisavos.</div>
-    <div class="progress-bar"><div class="progress-fill" id="terceros-progress" style="width:0%"></div></div>
+    <div class="progress-bar"><div class="progress-fill" id="terceros-progress" style="width:0%;background:var(--yellow)"></div></div>
     <div id="terceros-container"></div>
   </div>
   <div class="action-bar">
@@ -890,9 +890,9 @@ function renderMatch(match) {
     const iL = match.winner !== null && match.winner !== teamId && teamId !== null;
     const clickable = teamId && !match.winner;
     const cls = 'bracket-team' + (iW?' winner':'') + (iL?' loser':'') + (!teamId?' tbd':'') + (match.winner&&!iW&&!iL?' locked':'');
-    html += `<div class="${cls}"
-      ${clickable ? `onclick="pickWinner('${match.id}','${teamId}')"` : ''}
-      ${teamId ? `ondblclick="openKitModal('${teamId}')"` : ''}>`;
+    const clickAttr = clickable ? `data-match="${match.id}" data-team="${teamId}"` : '';
+    const dblAttr   = teamId    ? `data-modal="${teamId}"` : '';
+    html += `<div class="${cls}" ${clickAttr} ${dblAttr}>`;
     if (team) {
       html += `<img src="${getKitSrc(teamId)}" class="bt-kit" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
                <span class="bt-placeholder" style="display:none">${flagImg(team.flag,'18px')}</span>
@@ -907,6 +907,25 @@ function renderMatch(match) {
   html += `</div>`;
   return html;
 }
+
+// Single vs double click discrimination for bracket teams
+let _bracketClickTimer = null;
+document.addEventListener('click', function(e) {
+  const el = e.target.closest('[data-match]');
+  if (!el) return;
+  if (_bracketClickTimer) return; // double click already fired — ignore
+  _bracketClickTimer = setTimeout(() => {
+    _bracketClickTimer = null;
+    pickWinner(el.dataset.match, el.dataset.team);
+  }, 220);
+});
+document.addEventListener('dblclick', function(e) {
+  const el = e.target.closest('[data-modal]');
+  if (!el) return;
+  clearTimeout(_bracketClickTimer);
+  _bracketClickTimer = null; // cancel the pending single-click
+  openKitModal(el.dataset.modal);
+});
 
 function findMatch(matchId) {
   for (const [sideArr, sideName] of [[state.bracket.left,'left'],[state.bracket.right,'right']]) {
