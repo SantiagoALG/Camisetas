@@ -271,13 +271,14 @@ img.emoji{height:1.2em;width:1.2em;vertical-align:-0.2em;display:inline-block}
 .champion-modal-close:hover{background:rgba(255,255,255,0.25)}
 
 /* The downloadable card */
-.champion-card{width:420px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:40px 32px 32px;display:flex;flex-direction:column;align-items:center;gap:16px;position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.5)}
+.champion-card{width:420px;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:24px 32px 32px;display:flex;flex-direction:column;align-items:center;gap:10px;position:relative;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,0.5)}
 .champion-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,80,255,0.06) 0%,transparent 60%);pointer-events:none}
-.champion-card-logo{height:168px;width:auto;object-fit:contain;margin-bottom:4px}
+.champion-card-logo{height:168px;width:auto;object-fit:contain;margin-bottom:-4px}
 .champion-card-kittype{font-family:var(--f-display);font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);margin-top:-8px}
-.champion-card-tercero{width:100%;text-align:center;padding-top:12px;border-top:1px solid var(--border);margin-top:4px}
-.ch-tercero-label{font-family:var(--f-display);font-size:10px;letter-spacing:2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px}
-.ch-tercero-name{font-family:var(--f-display);font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text);text-transform:uppercase}
+.champion-card-tercero{width:100%;text-align:center;padding-top:10px;border-top:1px solid var(--border);margin-top:4px}
+.champion-card-segundo{width:100%;text-align:center;padding-top:10px;border-top:1px solid var(--border)}
+.ch-tercero-label,.ch-segundo-label{font-family:var(--f-display);font-size:10px;letter-spacing:2px;color:var(--text-muted);font-weight:600;text-transform:uppercase;margin-bottom:4px}
+.ch-tercero-name,.ch-segundo-name{font-family:var(--f-display);font-size:18px;font-weight:900;letter-spacing:2px;color:var(--text);text-transform:uppercase}
 .champion-card-eyebrow{font-family:var(--f-display);font-size:10px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:var(--text-muted);border:1px solid var(--border);padding:4px 14px;border-radius:20px}
 .champion-card-flag{font-size:56px;line-height:1;margin:4px 0}
 .champion-card-kit{width:180px;height:220px;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(37,80,255,0.2));animation:float 3s ease-in-out infinite}
@@ -1222,6 +1223,18 @@ function showChampionModal(teamId) {
   document.getElementById('ch-name').textContent = team.name.toUpperCase();
   document.getElementById('ch-kittype').textContent = kitType === 'local' ? 'Camiseta Local' : 'Camiseta Visitante';
 
+  // Second place (loser of the final)
+  const finalMatch = state.bracket.final;
+  const segundoId = finalMatch.winner ? finalMatch.teams.find(t => t !== finalMatch.winner) : null;
+  const segundoEl = document.getElementById('ch-segundo');
+  if (segundoId) {
+    const segundoTeam = getTeam(segundoId);
+    document.getElementById('ch-segundo-name').innerHTML = flagImg(segundoTeam.flag, '16px') + ' ' + segundoTeam.name;
+    segundoEl.style.display = 'block';
+  } else {
+    segundoEl.style.display = 'none';
+  }
+
   // Third place
   const terceroWinnerId = state.bracket.tercero?.winner;
   const terceroEl = document.getElementById('ch-tercero');
@@ -1547,15 +1560,15 @@ init();
         <div class="ch-deco-trophy">🏆</div>
         <div class="ch-deco-line"></div>
       </div>
+      <div class="champion-card-segundo" id="ch-segundo" style="display:none">
+        <div class="ch-segundo-label">🥈 2do lugar</div>
+        <div class="ch-segundo-name" id="ch-segundo-name"></div>
+      </div>
       <div class="champion-card-tercero" id="ch-tercero" style="display:none">
         <div class="ch-tercero-label">🥉 3er lugar</div>
         <div class="ch-tercero-name" id="ch-tercero-name"></div>
       </div>
     </div>
-
-    <button class="champion-download-btn" onclick="downloadChampionCard()">
-      ↓ Descargar póster
-    </button>
   </div>
 </div>
 
